@@ -640,6 +640,30 @@ class HarnessTests(unittest.TestCase):
             with self.assertRaises(harness.HarnessError):
                 harness.provider_schema_fingerprint("/bin/sh", binary)
 
+    def test_schema_fingerprint_uses_published_provider_source(self):
+        source = "terraform.articulate.team/articulate/litellm"
+        schema = {"provider": {"version": 0, "block": {}}, "resource_schemas": {}, "data_source_schemas": {}}
+
+        def query_schema(command, **kwargs):
+            config = Path(kwargs["env"]["TF_CLI_CONFIG_FILE"]).read_text()
+            self.assertIn(f'"{source}" = ', config)
+            return subprocess.CompletedProcess(
+                command, 0, json.dumps({"provider_schemas": {source: schema}}).encode(), b"",
+            )
+
+        with tempfile.TemporaryDirectory() as raw:
+            binary = Path(raw) / "terraform-provider-litellm"
+            binary.write_bytes(b"provider")
+            binary.chmod(0o700)
+            with mock.patch.object(harness.subprocess, "run", side_effect=query_schema):
+                binary_digest, schema_digest = harness.provider_schema_fingerprint(
+                    "terraform", binary, validate_upgrade_contract=False,
+                )
+        self.assertEqual(binary_digest, hashlib.sha256(b"provider").hexdigest())
+        self.assertEqual(schema_digest, hashlib.sha256(
+            b'{"data_source_schemas":{},"provider":{"block":{},"version":0},"resource_schemas":{}}'
+        ).hexdigest())
+
     def test_cache_paths_allow_trusted_macos_tmp_alias_but_reject_attacker_ancestor(self):
         tmp = Path("/tmp")
         canonical = harness.canonicalize_trusted_os_alias(tmp / "issue210-cache")

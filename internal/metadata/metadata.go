@@ -24,7 +24,7 @@ const (
 	TestedLiteLLMVersion = "1.104.0"
 
 	// CurrentProviderVersion is the release prepared by this source tree.
-	CurrentProviderVersion = "3.0.0"
+	CurrentProviderVersion = "3.0.1"
 
 	// MinimumProviderVersion is the stable lower bound for published examples.
 	// It must not move merely because a later compatible 3.x release is tagged.

@@ -1,7 +1,7 @@
 HOSTNAME ?= terraform.articulate.team
 NAMESPACE ?= articulate
 NAME ?= litellm
-VERSION ?= 3.0.0
+VERSION ?= 3.0.1
 OS_ARCH ?= $(shell go env GOOS)_$(shell go env GOARCH)
 
 default: install

@@ -180,7 +180,7 @@ make install
 ```
 
 `make install` puts the binary in the local plugin directory for
-`terraform.articulate.team/articulate/litellm`, version `3.0.0`.
+`terraform.articulate.team/articulate/litellm`, version `3.0.1`.
 The repository distributes a provider executable and HCL interface, not a
 supported Go library API.
 

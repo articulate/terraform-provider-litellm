@@ -529,7 +529,7 @@ def make_cli_config(directory: Path, provider_binary: Path) -> Path:
     descriptor = os.open(config, os.O_WRONLY | os.O_CREAT | os.O_EXCL | getattr(os, "O_NOFOLLOW", 0), 0o600)
     encoded = (
         'provider_installation {\n  dev_overrides {\n'
-        f'    "registry.terraform.io/ncecere/litellm" = {json.dumps(str(provider_dir))}\n'
+        f'    "terraform.articulate.team/articulate/litellm" = {json.dumps(str(provider_dir))}\n'
         "  }\n}\n"
     ).encode()
     try:
@@ -573,7 +573,7 @@ def provider_schema_fingerprint(
             raise HarnessError("current provider protocol/schema query failed")
         try:
             schema = json.loads(proc.stdout)
-            selected = schema["provider_schemas"]["registry.terraform.io/ncecere/litellm"]
+            selected = schema["provider_schemas"]["terraform.articulate.team/articulate/litellm"]
         except (json.JSONDecodeError, KeyError, TypeError) as error:
             raise HarnessError("current provider schema response was invalid") from error
         if validate_upgrade_contract:
