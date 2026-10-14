@@ -4,7 +4,7 @@
 
 <h1 align="center">LiteLLM Terraform Provider</h1>
 
-<p align="center">Manage your LiteLLM gateway with Terraform or OpenTofu.</p>
+<p align="center">Manage your LiteLLM gateway with Terraform.</p>
 
 <p align="center">
   <a href="https://github.com/articulate/terraform-provider-litellm/actions/workflows/ci.yml"><img src="https://github.com/articulate/terraform-provider-litellm/actions/workflows/ci.yml/badge.svg?branch=main" alt="CI status"></a>
@@ -64,11 +64,10 @@ terraform plan
 
 The plan reports `model_count`, the number of model configurations visible to
 your key. This example reads the proxy without creating or changing its resources.
-OpenTofu users can run `tofu init` and `tofu plan` instead.
 
 For an existing upstream configuration, complete the [state migration](#migrate-from-upstream)
 before the first plan. After changing a version constraint, run
-`terraform init -upgrade` or `tofu init -upgrade`.
+`terraform init -upgrade`.
 
 ### Manage a team and key
 
@@ -100,7 +99,6 @@ service accounts, and write-only keys.
 ## Compatibility
 
 - [Terraform](https://developer.hashicorp.com/terraform/install) >= 1.1.0 (provider protocol 6.0)
-- [OpenTofu](https://opentofu.org/docs/intro/install/) >= 1.6.0
 - [Go](https://go.dev/doc/install) >= 1.24.0 for provider development
 - Tested backend: exactly LiteLLM 1.104.0
 
@@ -110,7 +108,7 @@ provider dispatch.
 
 The optional write-only attributes `litellm_key.key_wo`,
 `litellm_key.send_invite_email`, `litellm_user.send_invite_email`, and
-`litellm_jwt_key_mapping.key_wo` require Terraform or OpenTofu 1.11.0 or later
+`litellm_jwt_key_mapping.key_wo` require Terraform 1.11.0 or later
 only when configured. They do not raise the global client minimum.
 
 LiteLLM organization endpoints, including reads, require an Enterprise license
@@ -131,18 +129,7 @@ terraform state replace-provider \
   terraform.articulate.team/articulate/litellm
 ```
 
-For OpenTofu state created with the short `ncecere/litellm` source:
-
-```sh
-tofu state replace-provider \
-  registry.opentofu.org/ncecere/litellm \
-  terraform.articulate.team/articulate/litellm
-```
-
-If OpenTofu used an explicit Terraform Registry source, use
-`registry.terraform.io/ncecere/litellm` as the source argument. Match the address
-recorded in state. Both commands use the same target and change the provider
-association without recreating gateway resources.
+The command changes the provider association without recreating gateway resources.
 
 Update the source and version constraint in configuration, then initialize
 and inspect the plan. The [3.0.0 upgrade notes](CHANGELOG.md#300) describe the

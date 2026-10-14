@@ -47,8 +47,6 @@ grep -q 'CLI=$selected_cli' "$SCRIPT_DIR/run.sh"
 grep -q 'rm -f -- "$port_file" "$stats_file"' "$SCRIPT_DIR/run.sh"
 grep -q 'unforwarded team identity was not authoritatively absent' "$SCRIPT_DIR/run.sh"
 grep -q 'run_cli state rm "$IMPORT_ADDRESS"' "$SCRIPT_DIR/run.sh"
-grep -q 'registry.opentofu.org/ncecere/litellm' "$SCRIPT_DIR/run.sh"
-grep -q 'opentofu-\*) provider_source=registry.opentofu.org/ncecere/litellm' "$SCRIPT_DIR/run.sh"
 grep -q "litellm_fallback.minimal|'litellm_fallback.fallback_imported\[0\]'" "$REPO_ROOT/internal_testing/smoke.sh"
 if grep -q 'litellm_api_base=http://127.0.0.1:1' "$SCRIPT_DIR/run.sh"; then
   echo 'failure recovery uses a dead base URL instead of the controlled proxy' >&2

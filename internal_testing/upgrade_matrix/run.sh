@@ -258,7 +258,6 @@ PREVIOUS_PROVIDER_BINARY=$CACHE/providers/extracted/$provider_platform/v2.0.1/te
 write_provider_config() {
   destination=$1
   provider_source=registry.terraform.io/ncecere/litellm
-  case "${MATRIX_CLI_LANE:-}" in opentofu-*) provider_source=registry.opentofu.org/ncecere/litellm ;; esac
   cat >"$destination/provider.tf" <<TF
 terraform {
   required_version = ">= 1.1.0"
@@ -286,7 +285,7 @@ write_old_config() {
 provider_installation {
   filesystem_mirror {
     path    = $(python3 -c 'import json,sys; print(json.dumps(sys.argv[1]))' "$PREVIOUS_MIRROR")
-    include = ["registry.terraform.io/ncecere/litellm", "registry.opentofu.org/ncecere/litellm"]
+    include = ["registry.terraform.io/ncecere/litellm"]
   }
 }
 EOF
@@ -297,7 +296,6 @@ write_current_config() {
 provider_installation {
   dev_overrides {
     "registry.terraform.io/ncecere/litellm" = $(python3 -c 'import json,sys; print(json.dumps(sys.argv[1]))' "$(dirname "$PROVIDER_BINARY")")
-    "registry.opentofu.org/ncecere/litellm"  = $(python3 -c 'import json,sys; print(json.dumps(sys.argv[1]))' "$(dirname "$PROVIDER_BINARY")")
   }
 }
 EOF
@@ -1137,7 +1135,7 @@ while IFS= read -r documentation_scenario; do
   record "documentation:$documentation_scenario" documentation passed ''
 done <"$SCRATCH/documentation.tsv"
 # Existing lifecycle matrix covers all OSS resources and data sources. Route
-# its historical `terraform` command name to the selected Terraform/OpenTofu
+# its historical `terraform` command name to the selected Terraform
 # binary so the protocol matrix cannot silently fall back to PATH Terraform.
 selected_cli=$(command -v "$CLI") || fail 'selected CLI is not executable'
 MATRIX_EXECUTED_CLI=$selected_cli

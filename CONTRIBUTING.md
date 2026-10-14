@@ -13,7 +13,7 @@ For security vulnerabilities, follow the [Articulate security policy](https://gi
 
 ## Development setup
 
-Development requires Go 1.24 or newer. Terraform 1.1 or newer and OpenTofu 1.6 or newer are supported clients. The tested backend is LiteLLM 1.104.0.
+Development requires Go 1.24 or newer. Terraform 1.1 or newer is supported. The tested backend is LiteLLM 1.104.0.
 
 ```bash
 git clone https://github.com/articulate/terraform-provider-litellm.git
@@ -36,7 +36,7 @@ make contract-check
 terraform fmt -check -recursive examples internal_testing
 ```
 
-Changes to provider runtime behavior also require race tests, source-pinned contract reproduction, Terraform/OpenTofu assembly, and appropriate lifecycle or upgrade-matrix coverage. Destructive acceptance tests require the repository's disposable LiteLLM stack and both explicit safety confirmations documented in `internal_testing/README.md`.
+Changes to provider runtime behavior also require race tests, source-pinned contract reproduction, Terraform assembly, and appropriate lifecycle or upgrade-matrix coverage. Destructive acceptance tests require the repository's disposable LiteLLM stack and both explicit safety confirmations documented in `internal_testing/README.md`.
 
 Do not update generated contract artifacts or runtime evidence until the corresponding source change has been independently reviewed. Generated artifacts must reproduce from the pinned source and tooling versions.
 

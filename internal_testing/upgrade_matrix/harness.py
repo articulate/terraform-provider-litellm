@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Fail-closed assembly and safety primitives for the upgrade matrix.
 
-This program deliberately never relays child-process output. Terraform/OpenTofu
+This program deliberately never relays child-process output. Terraform
 state, plans, logs, remote IDs, credentials, and URLs stay in mode-0700 scratch
 space and are removed by the caller's cleanup trap. The only durable result is
 an allowlisted JSON summary.
@@ -181,10 +181,10 @@ def selected_cli_version(cli: str) -> str:
     output = (proc.stdout + proc.stderr)[:16384]
     if proc.returncode != 0:
         raise HarnessError("selected CLI version check failed")
-    match = re.search(r"\d+\.\d+\.\d+", output)
+    match = re.search(r"^Terraform v(\d+\.\d+\.\d+)\b", output, re.MULTILINE)
     if not match:
-        raise HarnessError("selected CLI did not report a semantic version")
-    return match.group(0)
+        raise HarnessError("selected CLI did not report a Terraform semantic version")
+    return match.group(1)
 
 
 def redact(text: str) -> str:
@@ -472,9 +472,7 @@ def check_release_contract(tools: dict) -> None:
         raise HarnessError("release signing key or fingerprint is not the exact pin")
     schema_by_cli = previous.get("schema_sha256_by_cli", {})
     expected_schema_lanes = {
-        f"{product}-{version}"
-        for product in ("terraform", "opentofu")
-        for version in tools[product]
+        f"terraform-{version}" for version in tools["terraform"]
     }
     if set(schema_by_cli) != expected_schema_lanes:
         raise HarnessError("previous provider schema pins do not cover the exact CLI matrix")
@@ -487,16 +485,15 @@ def check_release_contract(tools: dict) -> None:
         digests.extend((archive.get("sha256"), archive.get("executable_sha256")))
     if any(not isinstance(value, str) or not re.fullmatch(r"[0-9a-f]{64}", value) for value in digests):
         raise HarnessError("release checksum is malformed")
-    for product, minimum in (("terraform", (1, 0, 0)), ("opentofu", (1, 6, 0))):
-        versions = tools[product]
-        if min(version_tuple(value) for value in versions) < minimum:
-            raise HarnessError("tool baseline is below the supported floor")
-        if not any(supports_optional_111(value) for value in versions):
-            raise HarnessError("tool matrix lacks a >=1.11 optional-feature lane")
-        for metadata in versions.values():
-            for archive in metadata["archives"].values():
-                if not re.fullmatch(r"[0-9a-f]{64}", archive["sha256"]):
-                    raise HarnessError("tool checksum is malformed")
+    versions = tools["terraform"]
+    if min(version_tuple(value) for value in versions) < (1, 0, 0):
+        raise HarnessError("tool baseline is below the supported floor")
+    if not any(supports_optional_111(value) for value in versions):
+        raise HarnessError("tool matrix lacks a >=1.11 optional-feature lane")
+    for metadata in versions.values():
+        for archive in metadata["archives"].values():
+            if not re.fullmatch(r"[0-9a-f]{64}", archive["sha256"]):
+                raise HarnessError("tool checksum is malformed")
 
 
 def make_provider_bundle(directory: Path, provider_binary: Path) -> tuple[Path, str]:
@@ -533,7 +530,6 @@ def make_cli_config(directory: Path, provider_binary: Path) -> Path:
     encoded = (
         'provider_installation {\n  dev_overrides {\n'
         f'    "registry.terraform.io/ncecere/litellm" = {json.dumps(str(provider_dir))}\n'
-        f'    "registry.opentofu.org/ncecere/litellm" = {json.dumps(str(provider_dir))}\n'
         "  }\n}\n"
     ).encode()
     try:
@@ -1177,7 +1173,7 @@ def install_tool(args: argparse.Namespace) -> int:
         download_verified(f"{metadata['base_url']}/{archive['file']}", zip_path, archive["sha256"], args.offline)
         destination = cache / product / args.version / platform_key()
         secure_directory(destination.parent)
-        member = "terraform" if product == "terraform" else "tofu"
+        member = "terraform"
         executable = extract_executable(zip_path, destination, member, None)
         executable_digest = hash_file(executable)
     proc = subprocess.run(
@@ -1186,7 +1182,7 @@ def install_tool(args: argparse.Namespace) -> int:
         env=safe_environment(),
     )
     output = (proc.stdout + proc.stderr)[:16384]
-    expected_product = "Terraform" if product == "terraform" else "OpenTofu"
+    expected_product = "Terraform"
     if proc.returncode or expected_product not in output or selected_cli_version(str(executable)) != args.version:
         raise HarnessError("installed tool product/version did not match the exact pin")
     print(f"Verified {product} {args.version}; executable_sha256={executable_digest}")
@@ -1277,32 +1273,30 @@ def install_previous(args: argparse.Namespace) -> int:
         executable = extract_executable(archive, extraction_parent / "v2.0.1", executable_name, expected["executable_sha256"])
         # Product/version are selected by the signed exact filename, exact archive
         # member, and protocol manifest; Terraform later executes this digest.
-        mirror_archives = []
-        for registry_host in ("registry.terraform.io", "registry.opentofu.org"):
-            mirror = secure_directory(cache / "mirror" / registry_host / "ncecere" / "litellm")
-            mirror_archive = mirror / name
-            if mirror_archive.exists() or mirror_archive.is_symlink():
-                if hash_file(mirror_archive) != expected["sha256"]:
-                    raise HarnessError("provider mirror archive was replaced")
-            else:
-                temporary = mirror / (".mirror-" + secrets.token_hex(16))
-                descriptor = os.open(temporary, os.O_WRONLY | os.O_CREAT | os.O_EXCL | getattr(os, "O_NOFOLLOW", 0), 0o600)
+        mirror = secure_directory(cache / "mirror" / "registry.terraform.io" / "ncecere" / "litellm")
+        mirror_archive = mirror / name
+        if mirror_archive.exists() or mirror_archive.is_symlink():
+            if hash_file(mirror_archive) != expected["sha256"]:
+                raise HarnessError("provider mirror archive was replaced")
+        else:
+            temporary = mirror / (".mirror-" + secrets.token_hex(16))
+            descriptor = os.open(temporary, os.O_WRONLY | os.O_CREAT | os.O_EXCL | getattr(os, "O_NOFOLLOW", 0), 0o600)
+            try:
+                source = os.open(archive, os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0))
                 try:
-                    source = os.open(archive, os.O_RDONLY | getattr(os, "O_NOFOLLOW", 0))
-                    try:
-                        while True:
-                            chunk = os.read(source, 1024 * 1024)
-                            if not chunk:
-                                break
-                            os.write(descriptor, chunk)
-                        os.fsync(descriptor)
-                    finally:
-                        os.close(source)
+                    while True:
+                        chunk = os.read(source, 1024 * 1024)
+                        if not chunk:
+                            break
+                        os.write(descriptor, chunk)
+                    os.fsync(descriptor)
                 finally:
-                    os.close(descriptor)
-                os.replace(temporary, mirror_archive)
-            mirror_archives.append(mirror_archive)
-        if any(hash_file(value) != expected["sha256"] for value in mirror_archives) or hash_file(executable) != expected["executable_sha256"]:
+                    os.close(source)
+            finally:
+                os.close(descriptor)
+            os.replace(temporary, mirror_archive)
+
+        if hash_file(mirror_archive) != expected["sha256"] or hash_file(executable) != expected["executable_sha256"]:
             raise HarnessError("verified provider cache changed before use")
     print(
         "Verified provider 2.0.1: fingerprint=" + tools["signing_key"]["fingerprint"]
@@ -1346,7 +1340,7 @@ def _read_session(path: Path) -> dict:
         raise HarnessError("evidence session digest is invalid")
     if not re.fullmatch(r"[0-9a-f]{40}", str(value["candidate_commit"])):
         raise HarnessError("evidence session candidate is invalid")
-    if not re.fullmatch(r"(?:terraform|opentofu)-\d+\.\d+\.\d+", str(value["cli_lane"])):
+    if not re.fullmatch(r"terraform-\d+\.\d+\.\d+", str(value["cli_lane"])):
         raise HarnessError("evidence session CLI lane is invalid")
     key_path = Path(value["key_file"])
     key_info = require_regular_file(key_path)
@@ -1390,16 +1384,15 @@ def _append_ledger(path: Path, item: dict) -> None:
 def start_session(args: argparse.Namespace) -> int:
     cli = Path(args.cli)
     provider = Path(args.provider_binary)
-    provider_digest, schema_digest = provider_schema_fingerprint(str(cli), provider)
     version = selected_cli_version(str(cli))
-    product = "opentofu" if "tofu" in cli.name else "terraform"
+    provider_digest, schema_digest = provider_schema_fingerprint(str(cli), provider)
     nonce_digest = hashlib.sha256(("issue210-run-v1\0" + secrets.token_hex(32)).encode()).hexdigest()
     key_path = Path(args.session).absolute().parent / (".ledger-key-" + secrets.token_hex(16))
     atomic_exclusive_write(key_path, secrets.token_bytes(32))
     session = {
         "schema_version": EVIDENCE_SCHEMA_VERSION,
         "run_nonce": nonce_digest,
-        "cli_lane": f"{product}-{version}",
+        "cli_lane": f"terraform-{version}",
         "candidate_commit": _git_commit(),
         "provider_sha256": provider_digest,
         "provider_schema_sha256": schema_digest,
@@ -1933,10 +1926,10 @@ def finalize_evidence(args: argparse.Namespace) -> int:
         for item in scenarios if item["status"] == "skipped"
     }
     lane = session["cli_lane"]
-    if lane in {"terraform-1.11.4", "opentofu-1.11.1"}:
+    if lane == "terraform-1.11.4":
         if not MODERN_MANDATORY_SKIPS.issubset(actual_skips) or actual_skips - MODERN_MANDATORY_SKIPS - FALLBACK_CONDITIONAL_SKIPS:
             raise HarnessError("modern CLI evidence differs from its exact mandatory/conditional skip contract")
-    elif lane in {"terraform-1.1.0", "opentofu-1.6.3"}:
+    elif lane == "terraform-1.1.0":
         agent_skips = actual_skips & PRE_111_AGENT_SKIPS
         if len(agent_skips) != 1 or not PRE_111_MANDATORY_SKIPS.issubset(actual_skips) or actual_skips - PRE_111_MANDATORY_SKIPS - agent_skips - FALLBACK_CONDITIONAL_SKIPS:
             raise HarnessError("pre-1.11 CLI evidence differs from its exact lane/subject/reason skip contract")
@@ -2046,7 +2039,7 @@ def parser() -> argparse.ArgumentParser:
     assemble.add_argument("--report")
     assemble.set_defaults(function=assembly)
     tool = commands.add_parser("install-tool")
-    tool.add_argument("product", choices=("terraform", "opentofu"))
+    tool.add_argument("product", choices=("terraform",))
     tool.add_argument("version")
     tool.add_argument("--cache", default="~/.cache/terraform-provider-litellm/tools")
     tool.add_argument("--offline", action="store_true")

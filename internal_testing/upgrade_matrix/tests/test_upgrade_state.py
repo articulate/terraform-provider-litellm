@@ -697,7 +697,7 @@ class UpgradeStateTests(unittest.TestCase):
             {"upgrade_expected_identity_migrations": {"litellm_agent": "sha256-of-prior-id"}},
         ))
 
-    def test_current_schema_accepts_one_exact_cli_registry_source(self):
+    def test_current_schema_requires_the_terraform_registry_source(self):
         schema = provider_schema()
         self.assertIs(
             upgrade_state._current_provider_schema(
@@ -705,21 +705,12 @@ class UpgradeStateTests(unittest.TestCase):
             ),
             schema,
         )
-        self.assertIs(
+        with self.assertRaises(upgrade_state.UpgradeStateError):
             upgrade_state._current_provider_schema(
-                {"provider_schemas": {upgrade_state.OPENTOFU_PROVIDER_SOURCE: schema}}
-            ),
-            schema,
-        )
+                {"provider_schemas": {"registry.opentofu.org/ncecere/litellm": schema}}
+            )
         with self.assertRaises(upgrade_state.UpgradeStateError):
             upgrade_state._current_provider_schema({"provider_schemas": {}})
-        with self.assertRaises(upgrade_state.UpgradeStateError):
-            upgrade_state._current_provider_schema(
-                {"provider_schemas": {
-                    upgrade_state.PROVIDER_SOURCE: schema,
-                    upgrade_state.OPENTOFU_PROVIDER_SOURCE: schema,
-                }}
-            )
 
     def test_malformed_state_and_schema_shapes_fail_closed(self):
         malformed = members_values()

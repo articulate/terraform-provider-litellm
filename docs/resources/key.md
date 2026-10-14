@@ -30,7 +30,7 @@ resource "litellm_key" "predefined" {
 
 ### Write-Only Predefined Key
 
-Terraform or OpenTofu 1.11 and later can send a predefined key without storing it in plan or state through `key_wo`. For end-to-end protection, source the value from an ephemeral resource or variable; a non-ephemeral source can still persist the secret independently of this resource.
+Terraform 1.11 and later can send a predefined key without storing it in plan or state through `key_wo`. For end-to-end protection, source the value from an ephemeral resource or variable; a non-ephemeral source can still persist the secret independently of this resource.
 
 ```hcl
 variable "litellm_key" {
@@ -53,7 +53,7 @@ In write-only mode, `key` remains null and `id` contains only `sha256:<key-hash>
 
 > **Key entropy:** Use a cryptographically random key with at least 128 bits of entropy. The unsalted SHA256 management identifier does not authenticate to LiteLLM, but it is visible in ordinary Terraform output and lets an observer verify offline guesses of a weak or patterned predefined key.
 
-> **Compatibility:** The optional write-only argument requires Terraform or OpenTofu 1.11+. Older clients can continue using the provider when `key_wo` is omitted, but reject configurations that set it.
+> **Compatibility:** The optional write-only argument requires Terraform 1.11+. Older clients can continue using the provider when `key_wo` is omitted, but reject configurations that set it.
 
 ### Create a Key and Email Its User
 
@@ -233,11 +233,11 @@ The following arguments are supported:
 
 * `key` - (Optional) User-defined key value. If not set, LiteLLM generates a 16-digit unique `sk-` key automatically. The key is stored as a sensitive value in state. Conflicts with `key_wo`.
 
-* `key_wo` - (Optional, Sensitive, Write-only) Predefined key sent to LiteLLM but represented only by null in plan and state. Must be configured with `key_wo_version`. Use a cryptographically random, high-entropy value because its SHA256 management identifier is persisted. Requires Terraform or OpenTofu 1.11+.
+* `key_wo` - (Optional, Sensitive, Write-only) Predefined key sent to LiteLLM but represented only by null in plan and state. Must be configured with `key_wo_version`. Use a cryptographically random, high-entropy value because its SHA256 management identifier is persisted. Requires Terraform 1.11+.
 
 * `key_wo_version` - (Optional, ForceNew) Persisted version or nonce for `key_wo`. Change this whenever the write-only secret changes. It conflicts with configurations that omit `key_wo`.
 
-* `send_invite_email` - (Optional, Write-only) Requests an asynchronous email for each successful key Create request. Requires `user_id` for an exact existing user with a syntactically valid email address and cannot be used with `service_account_id`. It is never persisted, read back, imported, or sent during Update; a successful apply does not confirm email delivery. Replacement or an ambiguous Create retry can request another email. Requires Terraform or compatible OpenTofu 1.11+ when configured.
+* `send_invite_email` - (Optional, Write-only) Requests an asynchronous email for each successful key Create request. Requires `user_id` for an exact existing user with a syntactically valid email address and cannot be used with `service_account_id`. It is never persisted, read back, imported, or sent during Update; a successful apply does not confirm email delivery. Replacement or an ambiguous Create retry can request another email. Requires Terraform 1.11+ when configured.
 
 * `key_alias` - (Optional) Human-readable alias for this key.
 

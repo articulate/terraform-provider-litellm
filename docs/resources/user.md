@@ -63,7 +63,7 @@ The following arguments are supported:
 * `tpm_limit` - (Optional) Tokens per minute limit for the user.
 * `rpm_limit` - (Optional) Requests per minute limit for the user.
 * `auto_create_key` - (Optional) Whether to automatically create an API key when the user is created. Defaults to `true`.
-* `send_invite_email` - (Optional, Write-only) Requests an asynchronous invitation for each successful user Create request. Requires a syntactically valid `user_email`. It is never persisted, read back, imported, or sent during Update; a successful apply does not confirm email delivery. Replacement can request another invitation. Requires Terraform or compatible OpenTofu 1.11+ when configured.
+* `send_invite_email` - (Optional, Write-only) Requests an asynchronous invitation for each successful user Create request. Requires a syntactically valid `user_email`. It is never persisted, read back, imported, or sent during Update; a successful apply does not confirm email delivery. Replacement can request another invitation. Requires Terraform 1.11+ when configured.
 * `teams` - (Optional) Unique team IDs the user belongs to. Membership order is not significant. Updates reconcile additions and removals through LiteLLM's team-member endpoints.
 * `models` - (Optional) List of model names the user is allowed to use.
 * `metadata` - (Optional) A map of key-value metadata pairs for the user.

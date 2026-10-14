@@ -62,7 +62,7 @@ func (r *JWTKeyMappingResource) ConfigValidators(context.Context) []resource.Con
 
 func (r *JWTKeyMappingResource) Schema(_ context.Context, _ resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		Description: "Manages a LiteLLM JWT claim-to-virtual-key mapping. A mapping is identified by its optional issuer scope plus its claim pair. The raw virtual key is write-only and requires Terraform 1.11 or compatible OpenTofu support for create and identity replacement. LiteLLM does not expose evidence that could verify in-place key rotation.",
+		Description: "Manages a LiteLLM JWT claim-to-virtual-key mapping. A mapping is identified by its optional issuer scope plus its claim pair. The raw virtual key is write-only and requires Terraform 1.11 for create and identity replacement. LiteLLM does not expose evidence that could verify in-place key rotation.",
 		Attributes: map[string]schema.Attribute{
 			"id":              schema.StringAttribute{Description: "Authoritative LiteLLM mapping UUID and import identifier.", Computed: true, PlanModifiers: []planmodifier.String{stringplanmodifier.UseStateForUnknown()}},
 			"jwt_issuer":      schema.StringAttribute{Description: "JWT issuer (`iss`) that scopes this mapping. Null means LiteLLM's global scope, which matches tokens from any issuer that has no issuer-specific mapping for the same claim. Immutable after creation: changing a configured value replaces the mapping and requires key_wo. When omitted, the existing scope is preserved. Requires LiteLLM 1.104.0 or later.", Optional: true, Computed: true, Validators: []validator.String{stringvalidator.LengthAtLeast(1)}, PlanModifiers: []planmodifier.String{jwtKeyMappingImmutableIssuerModifier{}}},

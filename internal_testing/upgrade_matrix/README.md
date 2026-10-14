@@ -20,7 +20,7 @@ Fallback resource coverage, data-source reads, refresh, and no-drift remain exec
 
 ## Provenance
 
-`tools.lock.json` pins Terraform 1.1.0/1.11.4 and OpenTofu 1.6.3/1.11.1 archives. It also pins the v2.0.1 Registry metadata, release key, full fingerprint, detached signature, checksum manifest, Registry manifest, archives, extracted executable digests, and the exact previous-provider schema digest emitted by each CLI lane. Terraform 1.1 serializes that schema differently from the other three pinned CLIs, so one cross-CLI schema hash would be a false pin.
+`tools.lock.json` pins Terraform 1.1.0/1.11.4 archives. It also pins the v2.0.1 Registry metadata, release key, full fingerprint, detached signature, checksum manifest, Registry manifest, archives, extracted executable digests, and the exact previous-provider schema digest emitted by each CLI lane. Terraform 1.1 serializes that schema differently from Terraform 1.11.4, so one cross-CLI schema hash would be a false pin.
 
 The installer:
 
@@ -31,7 +31,7 @@ The installer:
 5. verifies `SHA256SUMS.sig` against fingerprint `C753834A70062246C92CEF56F0A1AEC231353F8B` in a fresh GnuPG home;
 6. trusts archive and manifest checksums only after signature verification;
 7. extracts into a fresh private directory while rejecting links and unsafe paths; and
-8. verifies the exact executable name and digest before constructing byte-identical `registry.terraform.io` and `registry.opentofu.org` mirror entries. OpenTofu 1.6 rewrites provider state to its registry hostname, so generated OpenTofu upgrade modules use that hostname while Terraform modules retain the published Terraform Registry source. Both exact signed-cache paths and both dev overrides are required for offline schema/state inspection.
+8. verifies the exact executable name and digest before constructing the `registry.terraform.io` mirror entry. Generated upgrade modules retain the published Terraform Registry source. The signed cache and dev override support offline schema/state inspection.
 
 Every current-provider dev override receives a dedicated private directory containing exactly one verified executable. The redacted report and safe evidence ledger contain only controlled enums, bounded integers, HMAC-authenticated receipts, commit/digest provenance, and exact canonical schema fingerprints. The ephemeral ledger signing key and raw command output, plans, state, IDs, endpoints, and API assertions stay in bounded mode-0700 scratch storage. The key is securely unlinked after every cleanup attempt. Successful reports remove all raw scratch material; failed execution retains bounded diagnostics or recovery state without the session key.
 
@@ -66,7 +66,7 @@ sh internal_testing/upgrade_matrix/run.sh local
 internal_testing/compose.sh down -v
 ```
 
-The runtime-parity gate retains digest-bound exceptions for reviewed provider patches, including the #218 semantic-dictionary foundation and model, key, and organization consumers, from their exact integration bases and exact path sets; a different path or patch byte fails, and each exception is inert once its change is in the event base. Repository-owned non-PR workflow jobs execute this lane against a new local backend with all four pinned CLIs. Pull requests and forks run assembly only. Tag releases run all four full lanes against the exact tagged SHA before GPG import, build, or signing; each gate job has read-only contents permission and a wall timeout. There is no workflow-enabled remote mutation lane; adding one requires a separate future gate and reviewed scenario allowlist.
+The runtime-parity gate retains digest-bound exceptions for reviewed provider patches, including the #218 semantic-dictionary foundation and model, key, and organization consumers, from their exact integration bases and exact path sets; a different path or patch byte fails, and each exception is inert once its change is in the event base. Repository-owned non-PR workflow jobs execute this lane against a new local backend with both pinned Terraform CLIs. Pull requests and forks run assembly only. Tag releases run both full Terraform lanes against the exact tagged SHA before GPG import, build, or signing; each gate job has read-only contents permission and a wall timeout. There is no workflow-enabled remote mutation lane; adding one requires a separate future gate and reviewed scenario allowlist.
 
 ## Import ownership
 

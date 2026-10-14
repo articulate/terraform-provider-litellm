@@ -235,7 +235,7 @@ LITELLM_ACCEPTANCE_ASSEMBLY_ONLY=1 sh internal_testing/acceptance.sh
 ```
 
 The previous-release and import harness adds checksum-verified v2.0.1 upgrade,
-Terraform/OpenTofu protocol, all-resource import, replacement, recovery,
+Terraform protocol, all-resource import, replacement, recovery,
 data-source, and documentation inventories. Its default is offline,
 non-destructive assembly; destructive lanes have separate explicit gates:
 
