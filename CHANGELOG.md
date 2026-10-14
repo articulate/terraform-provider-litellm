@@ -7,6 +7,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.0.1]
+
+First published release of the Articulate fork. The `v3.0.0` tag failed its
+release gate before signing or publication.
+
+### Upgrade Notes
+- The provider source is `terraform.articulate.team/articulate/litellm`. Follow
+  the [3.0.0 migration instructions](#300) when replacing the upstream provider.
+- Published examples constrain the provider to `>= 3.0.0, < 4.0.0`.
+- The provider supports Terraform >= 1.1.0. Development requires Go >= 1.24.0.
+  The acceptance harness tests exactly LiteLLM 1.104.0. Optional write-only
+  attributes require Terraform >= 1.11.0.
+
+### Security
+- Provider credential handling and resource lifecycles are unchanged from upstream v2.2.0.
+
+### Fixed
+- Use Articulate's provider source for schema queries and development overrides
+  in the release harness. Run the harness regression tests in normal CI.
+
 ## [3.0.0]
 
 First release of the Articulate fork of

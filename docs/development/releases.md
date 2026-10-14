@@ -40,10 +40,10 @@ Its session policy permits bucket listing, namespace public-key reads, and
 LiteLLM artifact reads and uploads. It cannot write signing keys, Kong files,
 modules, or unrelated objects. It does not grant object deletion.
 
-The managed role's trust policy uses `repo:articulate/*:*`, which covers this
-repository's environment subject. Confirm the deployed trust before the first
-release. A local source check does not prove live AWS configuration. No new
-AWS access key is required.
+The role's trust policy uses `repo:articulate@766431/*:*`, which covers this
+repository's immutable OIDC subject. Confirm the deployed trust and the
+repository's OIDC subject settings before a release. A local source check does
+not prove live AWS configuration. No new AWS access key is required.
 
 The upstream signing pins in `internal_testing/upgrade_matrix/tools.lock.json`
 authenticate the previous provider used by upgrade tests. Keep those pins
@@ -58,10 +58,11 @@ an absent upload destination from an inaccessible object in a
 
 1. Prepare the version's `CHANGELOG.md` section in a reviewed PR. Include
    non-empty `Upgrade Notes` and `Security` subsections. The first fork release
-   uses the existing `3.0.0` section. This bootstrap uses reviewed tags rather
+   uses the existing `3.0.1` section. This bootstrap uses reviewed tags rather
    than automatic release PRs.
 2. After CI passes on the chosen main commit, create and push its version tag.
-   For the first release, use `v3.0.0`. Never move an existing release tag.
+   For the first release, use `v3.0.1`. The unpublished `v3.0.0` tag failed its
+   release gate. Never move an existing release tag.
 3. Inspect the exact-tag matrix, then approve the `provider-release` environment
    deployment. The workflow checks that the imported key matches the configured
    fingerprint before GoReleaser signs anything.

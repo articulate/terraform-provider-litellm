@@ -26,6 +26,8 @@ jobs:
           terraform_wrapper: false
       - name: Metadata, HCL, entrypoint, and release-note contracts
         run: go test . ./internal/contract ./internal/cmd/release-notes -count=1
+      - name: Upgrade harness regression tests
+        run: python3 -m unittest discover -s internal_testing/upgrade_matrix/tests -p 'test_*.py'
       - name: Offline LiteLLM API contract check
         run: make contract-check
       - name: Verify go.mod and go.sum are tidy
