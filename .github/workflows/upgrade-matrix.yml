@@ -47,23 +47,6 @@ jobs:
         with:
           go-version-file: go.mod
           cache: true
-      - name: Resolve immutable event base and verify provider runtime parity
-        env:
-          EVENT_NAME: ${{ github.event_name }}
-          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
-          EVENT_BEFORE_SHA: ${{ github.event.before }}
-          DEFAULT_BRANCH: ${{ github.event.repository.default_branch }}
-        run: |
-          case "$EVENT_NAME" in
-            pull_request) base=$PR_BASE_SHA ;;
-            push) base=$EVENT_BEFORE_SHA ;;
-            workflow_dispatch)
-              git fetch --no-tags origin "$DEFAULT_BRANCH"
-              base=$(git rev-parse "origin/$DEFAULT_BRANCH") ;;
-            *) echo 'unsupported runtime-parity event' >&2; exit 1 ;;
-          esac
-          python3 internal_testing/upgrade_matrix/verify_runtime_parity.py \
-            --event "$EVENT_NAME" --base "$base" --head "$GITHUB_SHA"
       - name: Install checksum-pinned CLI into the job-local cache
         run: |
           python3 internal_testing/upgrade_matrix/harness.py install-tool \

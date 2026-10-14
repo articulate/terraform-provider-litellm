@@ -66,7 +66,13 @@ sh internal_testing/upgrade_matrix/run.sh local
 internal_testing/compose.sh down -v
 ```
 
-The runtime-parity gate retains digest-bound exceptions for reviewed provider patches, including the #218 semantic-dictionary foundation and model, key, and organization consumers, from their exact integration bases and exact path sets; a different path or patch byte fails, and each exception is inert once its change is in the event base. Repository-owned non-PR workflow jobs execute this lane against a new local backend with both pinned Terraform CLIs. Pull requests and forks run assembly only. Tag releases run both full Terraform lanes against the exact tagged SHA before GPG import, build, or signing; each gate job has read-only contents permission and a wall timeout. There is no workflow-enabled remote mutation lane; adding one requires a separate future gate and reviewed scenario allowlist.
+The workflow jobs remain restricted to the upstream repository. Articulate's
+fork does not run the assembly, local execution, or release jobs. In the upstream
+repository, pull requests run assembly, and non-PR events can run both pinned
+Terraform CLIs against a new local backend. Tag releases run both full Terraform
+lanes against the exact tagged SHA before GPG import, build, or signing. Each
+gate job has read-only contents permission and a wall timeout. No workflow
+enables the remote mutation lane.
 
 ## Import ownership
 

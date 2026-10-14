@@ -16,11 +16,6 @@ manages models, teams, keys, budgets, and other gateway resources through the
 LiteLLM REST API. Keep model routing and access controls in reviewed configuration,
 inspect changes in a plan, and import existing resources.
 
-The first fork version, **3.0.0**, contains upstream v2.2.0 provider behavior.
-Registry publication is not enabled yet. Until publication, [build the provider
-locally](#development). The source address is
-`terraform.articulate.team/articulate/litellm`.
-
 [Quick start](#quick-start) · [Migration](#migrate-from-upstream) ·
 [Resource reference](#resource-reference) · [Security](#security) ·
 [Development](#development)
@@ -54,8 +49,8 @@ output "model_count" {
 }
 ```
 
-After installing the provider locally, or once a registry release is available,
-initialize and plan:
+Install the provider as described in [Development](#development), then initialize
+and plan:
 
 ```sh
 terraform init
