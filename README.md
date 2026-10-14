@@ -33,8 +33,8 @@ terraform {
 
   required_providers {
     litellm = {
-      source  = "registry.terraform.io/ncecere/litellm"
-      version = ">= 2.0.1, < 3.0.0"
+      source  = "terraform.articulate.team/articulate/litellm"
+      version = ">= 3.0.0, < 4.0.0"
     }
   }
 }
@@ -45,15 +45,14 @@ provider "litellm" {
 }
 ```
 
-Run `terraform init -upgrade` (or `tofu init -upgrade`) after changing the version constraint. The published source is exactly `registry.terraform.io/ncecere/litellm`.
+Run `terraform init -upgrade` (or `tofu init -upgrade`) after changing the version constraint. The published source is exactly `terraform.articulate.team/articulate/litellm`.
 
-Correcting the provider binary's served address to that published source does not change protocol 6, provider or resource schemas, HCL types, state values, IDs, or import formats. Normal state created with the published `ncecere/litellm` source needs no migration. If development-only configuration actually recorded state under the unpublished `registry.terraform.io/nicholas-cecere/litellm` address, migrate it explicitly; the provider does not silently alias addresses:
+This provider is Articulate's fork of [ncecere/terraform-provider-litellm](https://github.com/ncecere/terraform-provider-litellm). The resource types and state format are the same. State created with the upstream `registry.terraform.io/ncecere/litellm` source must move to the fork's address before the first plan. Run this command once in each state:
 
 ```sh
 terraform state replace-provider \
-  registry.terraform.io/nicholas-cecere/litellm \
-  registry.terraform.io/ncecere/litellm
-# OpenTofu users can run the equivalent `tofu state replace-provider` command.
+  registry.terraform.io/ncecere/litellm \
+  terraform.articulate.team/articulate/litellm
 ```
 
 Then, you can use the provider to manage LiteLLM resources. Here's an example of creating a model configuration:
@@ -233,7 +232,7 @@ for reproduction, upgrade review, and FastAPI/Pydantic limitations.
 
 1. Clone the repository:
 ```sh
-git clone https://github.com/ncecere/terraform-provider-litellm.git
+git clone https://github.com/articulate/terraform-provider-litellm.git
 ```
 
 2. Enter the repository directory:
@@ -246,7 +245,7 @@ cd terraform-provider-litellm
 make install
 ```
 
-The historical Go module identifier is retained for provider-build compatibility. This repository is distributed as a Terraform provider executable and does not expose a supported Go library API. Use `registry.terraform.io/ncecere/litellm` in Terraform or OpenTofu configurations rather than importing the Go module.
+This repository is distributed as a Terraform provider executable and does not expose a supported Go library API. Use `terraform.articulate.team/articulate/litellm` in Terraform or OpenTofu configurations rather than importing the Go module.
 
 ### Development Commands
 

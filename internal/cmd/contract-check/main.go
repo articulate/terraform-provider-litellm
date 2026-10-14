@@ -7,7 +7,7 @@ import (
 	"os"
 	"path/filepath"
 
-	"github.com/nicholas-cecere/terraform-provider-litellm/internal/contractapi"
+	"github.com/articulate/terraform-provider-litellm/internal/contractapi"
 )
 
 func main() {

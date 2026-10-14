@@ -6,8 +6,8 @@ terraform {
 
   required_providers {
     litellm = {
-      source  = "registry.terraform.io/ncecere/litellm"
-      version = ">= 2.0.1, < 3.0.0"
+      source  = "terraform.articulate.team/articulate/litellm"
+      version = ">= 3.0.0, < 4.0.0"
     }
   }
 }

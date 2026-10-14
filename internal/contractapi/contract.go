@@ -320,7 +320,7 @@ func ExtractProvider(root string) ([]Operation, error) {
 	config := &types.Config{Importer: sourceImporter(x.fset), Error: func(err error) {
 		typeDiagnostics = append(typeDiagnostics, err.Error())
 	}}
-	_, checkErr := config.Check("github.com/nicholas-cecere/terraform-provider-litellm/internal/provider", x.fset, parsedFiles, x.typesInfo)
+	_, checkErr := config.Check("github.com/articulate/terraform-provider-litellm/internal/provider", x.fset, parsedFiles, x.typesInfo)
 	if checkErr != nil || len(typeDiagnostics) != 0 {
 		if checkErr != nil && len(typeDiagnostics) == 0 {
 			typeDiagnostics = append(typeDiagnostics, checkErr.Error())
@@ -489,7 +489,7 @@ func (x *extractor) isClientType(t types.Type) bool {
 		t = types.Unalias(pointer.Elem())
 	}
 	named, ok := t.(*types.Named)
-	return ok && named.Obj() != nil && named.Obj().Name() == "Client" && named.Obj().Pkg() != nil && named.Obj().Pkg().Path() == "github.com/nicholas-cecere/terraform-provider-litellm/internal/provider"
+	return ok && named.Obj() != nil && named.Obj().Name() == "Client" && named.Obj().Pkg() != nil && named.Obj().Pkg().Path() == "github.com/articulate/terraform-provider-litellm/internal/provider"
 }
 
 func (x *extractor) selectorHasClientReceiver(selector *ast.SelectorExpr) (bool, bool) {
@@ -796,7 +796,7 @@ func reviewedTransportName(name string) bool {
 
 func exactProviderFunction(object types.Object, names map[string]int) bool {
 	function, ok := object.(*types.Func)
-	if !ok || function.Pkg() == nil || function.Pkg().Path() != "github.com/nicholas-cecere/terraform-provider-litellm/internal/provider" || function.Type().(*types.Signature).Recv() != nil {
+	if !ok || function.Pkg() == nil || function.Pkg().Path() != "github.com/articulate/terraform-provider-litellm/internal/provider" || function.Type().(*types.Signature).Recv() != nil {
 		return false
 	}
 	_, ok = names[function.Name()]
@@ -873,7 +873,7 @@ func exactURLEscapeFunction(object types.Object) (*types.Func, bool) {
 }
 
 const (
-	providerPackagePath          = "github.com/nicholas-cecere/terraform-provider-litellm/internal/provider"
+	providerPackagePath          = "github.com/articulate/terraform-provider-litellm/internal/provider"
 	invalidReviewedEndpointValue = "/.terraform-provider-litellm-invalid-reviewed-endpoint"
 )
 
@@ -1275,14 +1275,14 @@ var reviewedPaginationFunctions = map[string]bool{
 // raw-identity helpers and promptEnvironment. Any implementation or dependency
 // change must be independently reviewed before its new proof is admitted here.
 var reviewedRawIdentityProofs = map[string]string{
-	"keyDataSourceLookup":          "2f78ac1d7a477ed4de1344b6874bee3ea2acf3fb8947076539aec788f5166f8c",
-	"keyLookupIdentifier":          "26911f911b3dcbe80d3efad0012eeb27100185dc57eb78ce51ad7fe5c36113b5",
-	"keyBlockStateIdentity":        "565265e0425d3c4820d1bd198c0fed6f1b641e4dc4790752c269de3bd49eb08f",
-	"batchTeamID":                  "c568cb284d64ec148f22093cc28d161db0f7f00d88a7728f53b44d9d12fd3c04",
-	"teamMemberConfiguredIdentity": "f7f74ec5327d73d2f6a935213553eaab298068b93fe1b081734d619a51adfc3d",
+	"keyDataSourceLookup":          "dd8f488c14a290a4f964c4df826ff3a208258924ad125c496460ce470fb2b9b6",
+	"keyLookupIdentifier":          "a795914058cbb0c7b1eda78d245c54a5dbb7fc7eca64bc119ba1a8ba09100d0f",
+	"keyBlockStateIdentity":        "953aac18ec2f2a00f5ebe8f415acc6ac7fda976f2a59b744b92d144784147e81",
+	"batchTeamID":                  "4d33352cd28a2ed7ace72b3389a710a2f54336d6846d030152b306218f1006c2",
+	"teamMemberConfiguredIdentity": "dd942f6eae7870a8fc4d732fc741bfe34540e13f15d424afa892c9a20b4bd205",
 }
 
-var reviewedPromptEnvironmentProof = "9796a2c10e9c247caa736ddc593d0fff808ff9b1f846541349008174604f2920"
+var reviewedPromptEnvironmentProof = "08616a8a8bc1429a7ae6719a41155ba955c31486920aae0b69e8bb004b70e0ca"
 
 func canonicalPackageObject(object types.Object) string {
 	if object == nil {
@@ -4127,7 +4127,7 @@ func (x *extractor) validateLegacyStrictSourcePolicy() error {
 							continue
 						}
 						_, isFunction := object.(*types.Func)
-						approved := isFunction && object.Pkg() != nil && object.Pkg().Path() == "github.com/nicholas-cecere/terraform-provider-litellm/internal/provider" && queryHelpers[object.Name()]
+						approved := isFunction && object.Pkg() != nil && object.Pkg().Path() == "github.com/articulate/terraform-provider-litellm/internal/provider" && queryHelpers[object.Name()]
 						if !approved {
 							position := x.fset.Position(argument.Pos())
 							problems = append(problems, fmt.Sprintf("%s:%d: url.Values may only be passed to an exact reviewed query helper", base, position.Line))
@@ -4209,7 +4209,7 @@ func (x *extractor) validateLegacyStrictSourcePolicy() error {
 						problems = append(problems, fmt.Sprintf("%s:%d: raw net/http transport reference is not an exact reviewed Client implementation call", base, position.Line))
 					}
 					function, ok := object.(*types.Func)
-					if ok && function.Pkg() != nil && function.Pkg().Path() == "github.com/nicholas-cecere/terraform-provider-litellm/internal/provider" && function.Name() == "addKnownStringFilter" {
+					if ok && function.Pkg() != nil && function.Pkg().Path() == "github.com/articulate/terraform-provider-litellm/internal/provider" && function.Name() == "addKnownStringFilter" {
 						call, direct := parents[item].(*ast.CallExpr)
 						if !direct || call.Fun != item {
 							position := x.fset.Position(item.Pos())

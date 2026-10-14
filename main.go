@@ -5,9 +5,9 @@ import (
 	"flag"
 	"log"
 
+	"github.com/articulate/terraform-provider-litellm/internal/metadata"
+	"github.com/articulate/terraform-provider-litellm/internal/provider"
 	"github.com/hashicorp/terraform-plugin-framework/providerserver"
-	"github.com/nicholas-cecere/terraform-provider-litellm/internal/metadata"
-	"github.com/nicholas-cecere/terraform-provider-litellm/internal/provider"
 )
 
 // version is set during the release process via -ldflags

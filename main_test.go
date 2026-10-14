@@ -3,7 +3,7 @@ package main
 import (
 	"testing"
 
-	"github.com/nicholas-cecere/terraform-provider-litellm/internal/metadata"
+	"github.com/articulate/terraform-provider-litellm/internal/metadata"
 )
 
 func TestServeOptionsUsePublishedAddressAndPreserveDebug(t *testing.T) {

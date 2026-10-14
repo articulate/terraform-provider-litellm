@@ -116,7 +116,7 @@ provider_dir_hcl=$(python3 -c 'import json, sys; print(json.dumps(sys.argv[1]))'
 cat >"$SMOKE_DIR/terraformrc" <<EOF
 provider_installation {
   dev_overrides {
-    "registry.terraform.io/ncecere/litellm" = $provider_dir_hcl
+    "terraform.articulate.team/articulate/litellm" = $provider_dir_hcl
     "registry.opentofu.org/ncecere/litellm"  = $provider_dir_hcl
   }
   direct {}

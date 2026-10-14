@@ -7,6 +7,25 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.0.0]
+
+First release of the Articulate fork of
+[ncecere/terraform-provider-litellm](https://github.com/ncecere/terraform-provider-litellm).
+The provider code is the same as upstream v2.2.0.
+
+### Upgrade Notes
+- The provider source is now `terraform.articulate.team/articulate/litellm`. Run
+  `terraform state replace-provider registry.terraform.io/ncecere/litellm terraform.articulate.team/articulate/litellm`
+  once in each existing state before the first plan. Resources, IDs, and imports do not change.
+- Published examples constrain the provider to `>= 3.0.0, < 4.0.0`.
+- Supported clients are unchanged: Terraform >= 1.1.0 and OpenTofu >= 1.6.0. Provider development
+  requires Go >= 1.24.0. The acceptance harness tests exactly LiteLLM 1.104.0. The optional
+  write-only attributes require Terraform or OpenTofu >= 1.11.0.
+
+### Changed
+- Go module path is now `github.com/articulate/terraform-provider-litellm`.
+- `LICENSE` contains the full Apache License 2.0 text, and `NOTICE` credits upstream.
+
 ## [2.2.0] - 2026-10-05
 
 ### Upgrade Notes
