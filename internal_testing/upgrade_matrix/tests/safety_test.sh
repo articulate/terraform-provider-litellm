@@ -47,8 +47,6 @@ grep -q 'CLI=$selected_cli' "$SCRIPT_DIR/run.sh"
 grep -q 'rm -f -- "$port_file" "$stats_file"' "$SCRIPT_DIR/run.sh"
 grep -q 'unforwarded team identity was not authoritatively absent' "$SCRIPT_DIR/run.sh"
 grep -q 'run_cli state rm "$IMPORT_ADDRESS"' "$SCRIPT_DIR/run.sh"
-grep -q 'registry.opentofu.org/ncecere/litellm' "$SCRIPT_DIR/run.sh"
-grep -q 'opentofu-\*) provider_source=registry.opentofu.org/ncecere/litellm' "$SCRIPT_DIR/run.sh"
 grep -q "litellm_fallback.minimal|'litellm_fallback.fallback_imported\[0\]'" "$REPO_ROOT/internal_testing/smoke.sh"
 if grep -q 'litellm_api_base=http://127.0.0.1:1' "$SCRIPT_DIR/run.sh"; then
   echo 'failure recovery uses a dead base URL instead of the controlled proxy' >&2
@@ -66,46 +64,11 @@ if grep -q 'report-records' "$SCRIPT_DIR/run.sh"; then
   echo 'runner still accepts forgeable manual report records' >&2
   exit 1
 fi
-if grep -q 'e2a7e6d' "$REPO_ROOT/.github/workflows/upgrade-matrix.yml"; then
-  echo 'workflow still uses the stale runtime comparison SHA' >&2
-  exit 1
-fi
 if find "$REPO_ROOT/internal_testing" -name '*.tf' -type f \
   -exec grep -H -E 'error_message[[:space:]]*=[[:space:]]*"[a-z]' {} + | grep -q .; then
   echo 'Terraform fixture validation messages must start with uppercase prose for Terraform 1.1' >&2
   exit 1
 fi
-
-# The rebased #209/#254 base must pass, while an actual provider runtime edit
-# relative to that exact base must fail.
-base=$(git -C "$REPO_ROOT" rev-parse origin/issues)
-head=$(git -C "$REPO_ROOT" rev-parse HEAD)
-(cd "$REPO_ROOT" && python3 "$SCRIPT_DIR/verify_runtime_parity.py" \
-  --event pull_request --base "$base" --head "$head") >/dev/null
-(cd "$REPO_ROOT" && python3 "$SCRIPT_DIR/verify_runtime_parity.py" \
-  --event workflow_dispatch --base "$base" --head "$head") >/dev/null
-(cd "$REPO_ROOT" && python3 "$SCRIPT_DIR/verify_runtime_parity.py" \
-  --event release --base "$base" --head "$head") >/dev/null
-if (cd "$REPO_ROOT" && python3 "$SCRIPT_DIR/verify_runtime_parity.py" \
-  --event release --base 0000000000000000000000000000000000000000 --head "$head") >/dev/null 2>&1; then
-  echo 'release runtime parity did not fail closed without a base' >&2
-  exit 1
-fi
-worktree=$(mktemp -d "${TMPDIR:-/tmp}/issue210-parity.XXXXXX")
-rmdir "$worktree"
-cleanup_worktree() { git -C "$REPO_ROOT" worktree remove --force "$worktree" >/dev/null 2>&1 || true; }
-trap cleanup_worktree EXIT INT TERM HUP
-git -C "$REPO_ROOT" worktree add --detach "$worktree" "$head" >/dev/null
-printf '\n// adversarial runtime edit\n' >>"$worktree/main.go"
-git -C "$worktree" add main.go
-git -C "$worktree" -c user.name=issue210 -c user.email=issue210@example.invalid commit -m adversarial-runtime-edit >/dev/null
-if (cd "$worktree" && python3 "$SCRIPT_DIR/verify_runtime_parity.py" \
-  --event pull_request --base "$base" --head HEAD) >/dev/null 2>&1; then
-  echo 'actual provider edit unexpectedly passed runtime parity' >&2
-  exit 1
-fi
-cleanup_worktree
-trap - EXIT INT TERM HUP
 
 # A logical PWD beneath an attacker-controlled symlinked ancestor must resolve
 # to physical repository/workspace roots before any Terraform CLI argument is
@@ -115,8 +78,23 @@ symlink_test=$(mktemp -d "${TMPDIR:-/tmp}/issue210-symlink-cwd.XXXXXX")
 physical_test=$(python3 -c 'from pathlib import Path; import sys; print(Path(sys.argv[1]).resolve())' "$symlink_test")
 ln -s "$REPO_ROOT" "$physical_test/repository-alias"
 mkdir -m 700 "$physical_test/report"
+printf '%s\n' "$REPO_ROOT" >"$physical_test/expected-root"
+# Formatting is checked separately by assembly. This fixture checks only the
+# working directory and expected commands for the symlink-path regression.
+cat >"$physical_test/cli" <<'SH'
+#!/bin/sh
+set -eu
+[ "$(pwd -P)" = "$(cat "$(dirname "$0")/expected-root")" ]
+[ "$#" -eq 4 ]
+[ "$1" = fmt ]
+[ "$2" = -check ]
+[ "$3" = -recursive ]
+case "$4" in examples|internal_testing) ;; *) exit 1 ;; esac
+SH
+chmod 700 "$physical_test/cli"
 (
   cd "$physical_test/repository-alias"
+  MATRIX_CLI="$physical_test/cli" \
   MATRIX_PROVIDER_BINARY="$physical_test/missing-provider" \
   MATRIX_REPORT="$physical_test/report/assembly.json" \
     sh internal_testing/upgrade_matrix/run.sh assembly >/dev/null

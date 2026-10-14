@@ -28,7 +28,7 @@ resource "litellm_jwt_key_mapping" "by_hash" {
 }
 ```
 
-When using `key_wo`, create and identity replacement require Terraform or compatible OpenTofu write-only attribute support (version 1.11 or later). Import, refresh, same-identity planning with a null key/version, destroy, and reads remain usable by older supported clients. The mapping points at an existing virtual key; it does not create a key or expose a generated token.
+When using `key_wo`, create and identity replacement require Terraform write-only attribute support (version 1.11 or later). Import, refresh, same-identity planning with a null key/version, destroy, and reads remain usable by older supported clients. The mapping points at an existing virtual key; it does not create a key or expose a generated token.
 
 ## Arguments
 

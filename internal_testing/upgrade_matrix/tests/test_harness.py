@@ -156,9 +156,29 @@ class HarnessTests(unittest.TestCase):
 
     def test_version_selection_gates_write_only_features(self):
         self.assertFalse(harness.supports_optional_111("Terraform v1.1.0"))
-        self.assertFalse(harness.supports_optional_111("OpenTofu v1.6.3"))
         self.assertTrue(harness.supports_optional_111("Terraform v1.11.4"))
-        self.assertTrue(harness.supports_optional_111("OpenTofu v1.11.1"))
+
+    def test_removed_product_is_rejected_before_creating_cache(self):
+        with tempfile.TemporaryDirectory() as raw:
+            cache = Path(raw) / "cache"
+            proc = subprocess.run(
+                [sys.executable, str(MODULE_PATH), "install-tool", "opentofu", "1.11.1",
+                 "--offline", "--cache", str(cache)],
+                stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=False, timeout=30,
+            )
+            self.assertEqual(proc.returncode, 2)
+            self.assertFalse(cache.exists())
+
+    def test_cli_identity_comes_from_version_output(self):
+        with tempfile.TemporaryDirectory() as raw:
+            cli = Path(raw) / "selected-cli"
+            for version in ("1.1.0", "1.11.4"):
+                cli.write_text(f"#!{sys.executable}\nprint('Terraform v{version}')\n")
+                cli.chmod(0o700)
+                self.assertEqual(harness.selected_cli_version(str(cli)), version)
+            cli.write_text(f"#!{sys.executable}\nprint('OpenTofu v1.11.1')\n")
+            with self.assertRaisesRegex(harness.HarnessError, "Terraform"):
+                harness.selected_cli_version(str(cli))
 
     def test_redaction_removes_secrets_urls_and_labeled_ids(self):
         value = harness.redact("api_key=sk-thismustnotescape endpoint=https://host.invalid/path id=remote-123")
@@ -223,7 +243,7 @@ class HarnessTests(unittest.TestCase):
         self.assertRegex(tools["previous_provider"]["signature_sha256"], r"^[0-9a-f]{64}$")
         schema_pins = tools["previous_provider"]["schema_sha256_by_cli"]
         self.assertEqual(set(schema_pins), {
-            "terraform-1.1.0", "terraform-1.11.4", "opentofu-1.6.3", "opentofu-1.11.1",
+            "terraform-1.1.0", "terraform-1.11.4",
         })
         self.assertTrue(all(re.fullmatch(r"[0-9a-f]{64}", value) for value in schema_pins.values()))
 

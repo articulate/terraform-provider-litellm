@@ -1,31 +1,32 @@
-# LiteLLM Terraform Provider
+<p align="center">
+  <img src="assets/logo.png" alt="LiteLLM Terraform provider logo" width="144" height="144">
+</p>
 
-This Terraform provider allows you to manage LiteLLM resources through Infrastructure as Code. It provides support for managing models, teams, team members, and API keys via the LiteLLM REST API.
+<h1 align="center">LiteLLM Terraform Provider</h1>
 
-## Features
+<p align="center">Manage your LiteLLM gateway with Terraform.</p>
 
-- Manage LiteLLM model configurations
-- Associate models with specific teams
-- Create and manage teams
-- Configure team members and their permissions
-- Set usage limits and budgets
-- Control access to specific models
-- Specify model modes (e.g., completion, embedding, image generation)
-- Manage API keys with fine-grained controls
-- Support for reasoning effort configuration in the model resource
+<p align="center">
+  <a href="https://github.com/articulate/terraform-provider-litellm/actions/workflows/ci.yml"><img src="https://github.com/articulate/terraform-provider-litellm/actions/workflows/ci.yml/badge.svg?branch=main" alt="CI status"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-Apache%202.0-blue" alt="Apache 2.0 license"></a>
+</p>
 
-## Compatibility
+Articulate's fork of [ncecere/terraform-provider-litellm](https://github.com/ncecere/terraform-provider-litellm)
+manages models, teams, keys, budgets, and other gateway resources through the
+LiteLLM REST API. Keep model routing and access controls in reviewed configuration,
+inspect changes in a plan, and import existing resources.
 
-- [Terraform](https://developer.hashicorp.com/terraform/install) >= 1.1.0 (provider protocol 6.0)
-- [OpenTofu](https://opentofu.org/docs/intro/install/) >= 1.6.0
-- [Go](https://go.dev/doc/install) >= 1.24.0 for provider development
-- Tested backend: exactly LiteLLM 1.104.0
+[Quick start](#quick-start) · [Migration](#migrate-from-upstream) ·
+[Resource reference](#resource-reference) · [Security](#security) ·
+[Development](#development)
 
-The provider's global client baseline is Terraform 1.1.0 or OpenTofu 1.6.0. Terraform 1.0 is not supported because its `ignore_changes` planning behavior can erase the distinction between an omitted map and an explicitly empty map before the provider receives the configuration. The optional write-only attributes `litellm_key.key_wo`, `litellm_key.send_invite_email`, `litellm_user.send_invite_email`, and `litellm_jwt_key_mapping.key_wo` require Terraform or OpenTofu 1.11.0 or later only when they are configured.
+## Quick start
 
-## Using the Provider
+Use an existing LiteLLM proxy and a key with permission to read its model
+configuration. Supply the proxy URL and key through the `LITELLM_API_BASE` and
+`LITELLM_API_KEY` environment variables. Obtain the key from your secret manager.
 
-To use the LiteLLM provider in your Terraform configuration, you need to declare it in the <code>terraform</code> block:
+Save this configuration as `main.tf`:
 
 ```hcl
 terraform {
@@ -39,15 +40,83 @@ terraform {
   }
 }
 
-provider "litellm" {
-  api_base = var.litellm_api_base
-  api_key  = var.litellm_api_key
+provider "litellm" {}
+
+data "litellm_models" "available" {}
+
+output "model_count" {
+  value = length(data.litellm_models.available.models)
 }
 ```
 
-Run `terraform init -upgrade` (or `tofu init -upgrade`) after changing the version constraint. The published source is exactly `terraform.articulate.team/articulate/litellm`.
+Install the provider as described in [Development](#development), then initialize
+and plan:
 
-This provider is Articulate's fork of [ncecere/terraform-provider-litellm](https://github.com/ncecere/terraform-provider-litellm). The resource types and state format are the same. Existing upstream state must move to the fork's address before the first plan. For Terraform, run this command once in each state:
+```sh
+terraform init
+terraform plan
+```
+
+The plan reports `model_count`, the number of model configurations visible to
+your key. This example reads the proxy without creating or changing its resources.
+
+For an existing upstream configuration, complete the [state migration](#migrate-from-upstream)
+before the first plan. After changing a version constraint, run
+`terraform init -upgrade`.
+
+### Manage a team and key
+
+Add these resources to grant a team access to an existing model alias. Replace
+`existing-model-alias` with a model name configured on your proxy.
+
+```hcl
+resource "litellm_team" "application" {
+  team_alias      = "application"
+  models          = ["existing-model-alias"]
+  max_budget      = 100.0
+  budget_duration = "30d"
+}
+
+resource "litellm_key" "application" {
+  key_alias       = "application"
+  team_id         = litellm_team.application.team_id
+  max_budget      = 25.0
+  budget_duration = "30d"
+}
+```
+
+When `team_id` is set and `models` is omitted, the provider sends
+`["all-team-models"]` so the key can use the team's models. The generated key
+is a sensitive value in state. See the [team](docs/resources/team.md) and
+[key](docs/resources/key.md) references for rate limits, route permissions,
+service accounts, and write-only keys.
+
+## Compatibility
+
+- [Terraform](https://developer.hashicorp.com/terraform/install) >= 1.1.0 (provider protocol 6.0)
+- [Go](https://go.dev/doc/install) >= 1.24.0 for provider development
+- Tested backend: exactly LiteLLM 1.104.0
+
+Terraform 1.0 is unsupported. Its `ignore_changes` planning behavior can erase
+the distinction between an omitted map and an explicitly empty map before
+provider dispatch.
+
+The optional write-only attributes `litellm_key.key_wo`,
+`litellm_key.send_invite_email`, `litellm_user.send_invite_email`, and
+`litellm_jwt_key_mapping.key_wo` require Terraform 1.11.0 or later
+only when configured. They do not raise the global client minimum.
+
+LiteLLM organization endpoints, including reads, require an Enterprise license
+from LiteLLM 1.102.0. Review the [upgrade notes](CHANGELOG.md) before changing
+the provider or proxy version.
+
+## Migrate from upstream
+
+The fork keeps the resource types, state format, IDs, and import formats of
+upstream v2.2.0. The provider source address changes. Every existing state must
+replace its upstream address before the first plan with the fork.
+
+For Terraform:
 
 ```sh
 terraform state replace-provider \
@@ -55,264 +124,95 @@ terraform state replace-provider \
   terraform.articulate.team/articulate/litellm
 ```
 
-For OpenTofu state created with the short `ncecere/litellm` source, run:
+The command changes the provider association without recreating gateway resources.
 
-```sh
-tofu state replace-provider \
-  registry.opentofu.org/ncecere/litellm \
-  terraform.articulate.team/articulate/litellm
-```
+Update the source and version constraint in configuration, then initialize
+and inspect the plan. The [3.0.0 upgrade notes](CHANGELOG.md#300) describe the
+migration and compatibility baseline.
 
-If the OpenTofu configuration used an explicit Terraform Registry source, use
-`registry.terraform.io/ncecere/litellm` as the source argument instead. Match the
-source address recorded in state. Both commands use the same target.
+## Resource reference
 
-Then, you can use the provider to manage LiteLLM resources. Here's an example of creating a model configuration:
+Use the resource documentation for complete arguments, import formats, and
+lifecycle limitations. Single-item and list lookups are in the
+[data-source reference](docs/index.md#available-data-sources).
 
-```hcl
-resource "litellm_model" "gpt4" {
-  model_name          = "gpt-4-proxy"
-  custom_llm_provider = "openai"
-  model_api_key       = var.openai_api_key
-  model_api_base      = "https://api.openai.com/v1"
-  base_model          = "gpt-4"
-  tier                = "paid"
-  mode                = "chat"
-  reasoning_effort    = "medium"  # Optional: "low", "medium", or "high"
-  
-  input_cost_per_million_tokens  = 30.0
-  output_cost_per_million_tokens = 60.0
-}
-```
+| Area | Resources |
+| --- | --- |
+| Models and routing | [Models](docs/resources/model.md), [fallbacks](docs/resources/fallback.md), [model access groups](docs/resources/access_group.md), [unified access groups](docs/resources/unified_access_group.md) |
+| Identity and access | [Keys](docs/resources/key.md), [key blocking](docs/resources/key_block.md), [users](docs/resources/user.md), [teams](docs/resources/team.md), [team blocking](docs/resources/team_block.md), [team members](docs/resources/team_member.md), [batch members](docs/resources/team_member_add.md), [JWT mappings](docs/resources/jwt_key_mapping.md) |
+| Budgets and organization | [Budgets](docs/resources/budget.md), [organizations](docs/resources/organization.md), [organization members](docs/resources/organization_member.md), [projects](docs/resources/project.md), [tags](docs/resources/tag.md) |
+| Tools and knowledge | [MCP servers](docs/resources/mcp_server.md), [agents](docs/resources/agent.md), [search tools](docs/resources/search_tool.md), [vector stores](docs/resources/vector_store.md) |
+| Provider configuration | [Credentials](docs/resources/credential.md), [guardrails](docs/resources/guardrail.md), [prompts](docs/resources/prompt.md) |
 
-For full details on the <code>litellm_model</code> resource, see the [model resource documentation](docs/resources/model.md).
+Model configuration includes modes, reasoning effort, and Bedrock cross-account
+access through `aws_session_name` and `aws_role_name`. Follow the
+[model reference](docs/resources/model.md) for provider-specific settings.
+The [examples directory](examples/README.md) contains complete configurations.
 
-Here's an example of creating an API key with various options:
+## Security
 
-```hcl
-resource "litellm_key" "example_key" {
-  models               = ["gpt-4", "claude-3.5-sonnet"]
-  allowed_routes       = ["/chat/completions", "/keys/*"]
-  max_budget           = 100.0
-  user_id              = "user123"
-  team_id              = "team456"
-  max_parallel_requests = 5
-  tpm_limit            = 1000
-  rpm_limit            = 60
-  budget_duration      = "monthly"
-  key_alias            = "prod-key-1"
-  duration             = "30d"
-  metadata             = {
-    environment = "production"
-  }
-  allowed_cache_controls = ["no-cache", "max-age=3600"]
-  soft_budget          = 80.0
-  aliases              = {
-    "gpt-4" = "gpt4"
-  }
-  config               = {
-    default_model = "gpt-4"
-  }
-  permissions          = {
-    can_create_keys = "true"
-  }
-  model_max_budget     = {
-    "gpt-4" = 50.0
-  }
-  model_rpm_limit      = {
-    "claude-3.5-sonnet" = 30
-  }
-  model_tpm_limit      = {
-    "gpt-4" = 500
-  }
-  guardrails           = ["content_filter", "token_limit"]
-  blocked              = false
-  tags                 = ["production", "api"]
-}
-```
+Use environment variables or a secret manager for provider credentials. The
+provider also accepts `api_base` and sensitive `api_key` arguments in HCL.
+Explicit arguments take precedence over environment variables. TLS certificate
+verification is enabled by default. `insecure_skip_verify` disables it.
 
-The <code>litellm_key</code> resource supports the following options:
+Terraform's `sensitive` flag hides values in normal output. It does not keep
+them out of state. Protect state and plan files with encryption and access
+controls. Generated keys and configured credentials can persist there.
 
-- <code>models</code>: List of allowed models for this key
-- <code>allowed_routes</code> / <code>allowed_passthrough_routes</code>: Restrict which LiteLLM proxy routes this key may call
-- <code>max_budget</code>: Maximum budget for the key
-- <code>user_id</code> and <code>team_id</code>: Associate the key with a user and team
-- <code>service_account_id</code>: Create a team-owned service account key (defaults <code>key_alias</code> and injects metadata)
-- <code>max_parallel_requests</code>: Limit concurrent requests
-- <code>tpm_limit</code> and <code>rpm_limit</code>: Set tokens and requests per minute limits
-- <code>budget_duration</code>: Specify budget duration (e.g., "monthly", "weekly")
-- <code>key_alias</code>: Set a friendly name for the key
-- <code>duration</code>: Set the key's validity period
-- <code>metadata</code>: Add custom metadata to the key
-- <code>allowed_cache_controls</code>: Specify allowed cache control directives
-- <code>soft_budget</code>: Set a soft budget limit
-- <code>aliases</code>: Define model aliases
-- <code>config</code>: Set configuration options
-- <code>permissions</code>: Specify key permissions
-- <code>model_max_budget</code>, <code>model_rpm_limit</code>, <code>model_tpm_limit</code>: Set per-model limits
-- <code>guardrails</code>: Apply specific guardrails to the key
-- <code>blocked</code>: Flag to block/unblock the key
-- <code>tags</code>: Add tags for organization and filtering
+For predefined keys, `key_wo` can avoid storing plaintext in the key resource.
+Use an ephemeral source so the input does not persist elsewhere in the plan or
+state. See [write-only key handling](docs/resources/key.md#write-only-predefined-key)
+for client requirements, key entropy, and replacement behavior.
 
-When <code>team_id</code> is set and <code>models</code> is omitted, the provider automatically allows the key to use all models in that team by sending <code>["all-team-models"]</code> to the API.
-
-For full details on the <code>litellm_key</code> resource, see the [key resource documentation](docs/resources/key.md).
-
-### Available Resources
-
-- <code>litellm_model</code>: Manage model configurations. [Documentation](docs/resources/model.md)
-- <code>litellm_key</code>: Manage API keys. [Documentation](docs/resources/key.md)
-- <code>litellm_key_block</code>: Block/unblock an API key. [Documentation](docs/resources/key_block.md)
-- <code>litellm_team</code>: Manage teams. [Documentation](docs/resources/team.md)
-- <code>litellm_team_block</code>: Block/unblock a team. [Documentation](docs/resources/team_block.md)
-- <code>litellm_team_member</code>: Manage an individual team member. [Documentation](docs/resources/team_member.md)
-- <code>litellm_team_member_add</code>: Manage a batch of team members. [Documentation](docs/resources/team_member_add.md)
-- <code>litellm_organization</code>: Manage organizations. [Documentation](docs/resources/organization.md)
-- <code>litellm_organization_member</code>: Manage organization members. [Documentation](docs/resources/organization_member.md)
-- <code>litellm_project</code>: Manage projects (between teams and keys in the hierarchy). [Documentation](docs/resources/project.md)
-- <code>litellm_user</code>: Manage users. [Documentation](docs/resources/user.md)
-- <code>litellm_budget</code>: Manage reusable budgets and rate limits. [Documentation](docs/resources/budget.md)
-- <code>litellm_tag</code>: Manage tags for categorizing resources. [Documentation](docs/resources/tag.md)
-- <code>litellm_access_group</code>: Manage model access groups. [Documentation](docs/resources/access_group.md)
-- <code>litellm_unified_access_group</code>: Manage access groups via the `/v1/access_group` API. [Documentation](docs/resources/unified_access_group.md)
-- <code>litellm_fallback</code>: Manage model fallback configuration. [Documentation](docs/resources/fallback.md)
-- <code>litellm_guardrail</code>: Manage content-safety guardrails. [Documentation](docs/resources/guardrail.md)
-- <code>litellm_prompt</code>: Manage reusable prompt templates. [Documentation](docs/resources/prompt.md)
-- <code>litellm_agent</code>: Manage LiteLLM Agents (A2A). [Documentation](docs/resources/agent.md)
-- <code>litellm_search_tool</code>: Manage web-search tool configurations. [Documentation](docs/resources/search_tool.md)
-- <code>litellm_mcp_server</code>: Manage MCP (Model Context Protocol) servers. [Documentation](docs/resources/mcp_server.md)
-- <code>litellm_credential</code>: Manage credentials for secure authentication. [Documentation](docs/resources/credential.md)
-- <code>litellm_vector_store</code>: Manage vector stores for embeddings and RAG. [Documentation](docs/resources/vector_store.md)
-- <code>litellm_jwt_key_mapping</code>: Manage JWT string claim-to-existing-virtual-key mappings. [Documentation](docs/resources/jwt_key_mapping.md)
-
-### Available Data Sources
-
-Single-item lookups:
-
-- <code>litellm_model</code> ([docs](docs/data-sources/model.md)), <code>litellm_key</code> ([docs](docs/data-sources/key.md)), <code>litellm_team</code> ([docs](docs/data-sources/team.md)), <code>litellm_organization</code> ([docs](docs/data-sources/organization.md)), <code>litellm_project</code> ([docs](docs/data-sources/project.md)), <code>litellm_user</code> ([docs](docs/data-sources/user.md)), <code>litellm_budget</code> ([docs](docs/data-sources/budget.md)), <code>litellm_tag</code> ([docs](docs/data-sources/tag.md)), <code>litellm_access_group</code> ([docs](docs/data-sources/access_group.md)), <code>litellm_unified_access_group</code> ([docs](docs/data-sources/unified_access_group.md)), <code>litellm_prompt</code> ([docs](docs/data-sources/prompt.md)), <code>litellm_guardrail</code> ([docs](docs/data-sources/guardrail.md)), <code>litellm_agent</code> ([docs](docs/data-sources/agent.md)), <code>litellm_search_tool</code> ([docs](docs/data-sources/search_tool.md)), <code>litellm_fallback</code> ([docs](docs/data-sources/fallback.md)), <code>litellm_mcp_server</code> ([docs](docs/data-sources/mcp_server.md)), <code>litellm_credential</code> ([docs](docs/data-sources/credential.md)), <code>litellm_vector_store</code> ([docs](docs/data-sources/vector_store.md)), <code>litellm_jwt_key_mapping</code> ([docs](docs/data-sources/jwt_key_mapping.md))
-
-List data sources (return all items of a type):
-
-- <code>litellm_models</code> ([docs](docs/data-sources/models.md)), <code>litellm_keys</code> ([docs](docs/data-sources/keys.md)), <code>litellm_teams</code> ([docs](docs/data-sources/teams.md)), <code>litellm_organizations</code> ([docs](docs/data-sources/organizations.md)), <code>litellm_projects</code> ([docs](docs/data-sources/projects.md)), <code>litellm_users</code> ([docs](docs/data-sources/users.md)), <code>litellm_budgets</code> ([docs](docs/data-sources/budgets.md)), <code>litellm_tags</code> ([docs](docs/data-sources/tags.md)), <code>litellm_access_groups</code> ([docs](docs/data-sources/access_groups.md)), <code>litellm_unified_access_groups</code> ([docs](docs/data-sources/unified_access_groups.md)), <code>litellm_prompts</code> ([docs](docs/data-sources/prompts.md)), <code>litellm_guardrails</code> ([docs](docs/data-sources/guardrails.md)), <code>litellm_agents</code> ([docs](docs/data-sources/agents.md)), <code>litellm_search_tools</code> ([docs](docs/data-sources/search_tools.md)), <code>litellm_mcp_servers</code> ([docs](docs/data-sources/mcp_servers.md)), <code>litellm_jwt_key_mappings</code> ([docs](docs/data-sources/jwt_key_mappings.md))
+Do not commit API keys, Terraform state, local variable files, or private logs.
+Report vulnerabilities through the [Articulate security policy](https://github.com/articulate/.github/blob/main/SECURITY.md).
 
 ## Development
 
-### Project Structure
+Build and install the provider from source:
 
-The project is organized as follows:
-
-```
-terraform-provider-litellm/
-├── internal/
-│   └── provider/               # the provider implementation (registered in main.go)
-│       ├── provider.go         # provider schema + resource/data-source registration
-│       ├── client.go           # LiteLLM API HTTP client
-│       ├── resource_*.go       # resource implementations and helpers
-│       ├── datasource_*.go     # data-source implementations and helpers
-│       └── *_test.go           # unit tests
-├── docs/                       # resource & data-source documentation
-├── internal_testing/           # docker compose LiteLLM + smoke-test configs
-├── main.go                     # provider entrypoint
-├── go.mod
-├── go.sum
-├── Makefile
-└── ...
-```
-
-### Implementation and compatibility
-
-This repository publishes a Terraform provider binary and its HCL interface; it
-is not a supported external Go library API. Provider implementation packages are
-internal details. The binary entry point in `main.go` serves only the Terraform
-Plugin Framework implementation in `internal/provider`.
-
-The former top-level `litellm/` Terraform Plugin SDKv2 implementation was left
-behind by the Framework migration and was never registered by the migrated
-provider binary. Removing that dead implementation does not require a state
-migration: the provider type name, registered resource and data-source type
-names, schema versions and types, state values and IDs, and import formats are
-unchanged. Provider source identity and the one development-only migration case
-are documented in [Using the Provider](#using-the-provider).
-
-The checked LiteLLM OpenAPI, hidden-route supplement, provider-operation golden,
-exact operation classification, separately reviewed pins, and offline Go verifier
-protect the provider's HTTP API boundary without adding any runtime Python or
-source dependency. See [API contract maintenance](docs/development/api-contract.md)
-for reproduction, upgrade review, and FastAPI/Pydantic limitations.
-
-### Building the Provider
-
-1. Clone the repository:
 ```sh
 git clone https://github.com/articulate/terraform-provider-litellm.git
-```
-
-2. Enter the repository directory:
-```sh
 cd terraform-provider-litellm
-```
-
-3. Build and install the provider:
-```sh
+go mod download
 make install
 ```
 
-This repository is distributed as a Terraform provider executable and does not expose a supported Go library API. Use `terraform.articulate.team/articulate/litellm` in Terraform or OpenTofu configurations rather than importing the Go module.
+`make install` puts the binary in the local plugin directory for
+`terraform.articulate.team/articulate/litellm`, version `3.0.0`.
+The repository distributes a provider executable and HCL interface, not a
+supported Go library API.
 
-### Development Commands
-
-The Makefile provides several useful commands for development:
-
-- `make build`: Builds the provider
-- `make install`: Builds and installs the provider
-- `make test`: Runs the test suite
-- `make fmt`: Formats the code
-- `make vet`: Runs go vet
-- `make contract-check`: Verifies the checked LiteLLM API contract offline
-- `make contract-update`: Regenerates the contract from the exact pinned upstream source
-- `make contract-diff`: Reproduces and compares the pinned contract without modifying files
-- `make contract-update-atomicity-test`: Verifies exclusive-writer locking plus rollback, permissions, signal/failure cleanup, concurrent interleavings, and stale-lock refusal
-- `make lint`: Runs golangci-lint
-- `make clean`: Removes build artifacts and installed provider
-
-### Testing
-
-**Unit tests**
+Run the local checks:
 
 ```sh
 make test
+make vet
+make contract-check
 ```
 
-**Smoke tests** (manual run against a local LiteLLM proxy) exercise real plan/apply/destroy for selected resources and data sources. Results are written to timestamped files under `internal_testing/.smoke-logs/`.
+CI also checks formatting, runs race tests, and builds release snapshots.
+Provider code lives in `internal/provider`. `main.go` registers the Terraform
+Plugin Framework implementation. Resource and data-source references live in
+`docs/`, and examples live in `examples/`.
 
-1. Start the proxy and DB: `make local` (runs `docker compose up -d` in `internal_testing/`).
-2. Optionally follow logs: `make logs`.
-3. Run smoke for one or more files (at least one of `resources=` or `datasources=` required, comma-separated):
+The checked OpenAPI contract and offline verifier protect the provider's HTTP
+API boundary without a runtime Python or upstream-source dependency. Read
+[API contract maintenance](docs/development/api-contract.md) before updating
+the pinned LiteLLM contract. `make contract-diff` compares a reproduction.
+`make contract-update` regenerates the checked artifacts after review.
+`make contract-update-atomicity-test` checks locking and rollback behavior.
 
-   ```sh
-   make smoke resources=model_minimal.tf
-   make smoke datasources=keys_list.tf
-   make smoke resources=model_minimal.tf,key_minimal.tf datasources=keys_list.tf,model.tf
-   ```
+Smoke and acceptance tests create and destroy real resources. Use the pinned
+disposable LiteLLM stack and the explicit safety confirmations in
+[the test harness guide](internal_testing/README.md). Private smoke logs are
+written under `internal_testing/.smoke-logs/`.
 
-   All listed files are applied in a single Terraform run (shared state). The harness builds the provider and copies its checked local test variables into an isolated private workspace.
-
-4. Inspect the timestamped private log under `internal_testing/.smoke-logs/`.
-
-See [internal_testing/README.md](internal_testing/README.md) for full details (Docker layout, directory structure, tfvars).
-
-### Contributing
-
-Contributions are welcome! Please read our [contributing guidelines](CONTRIBUTING.md) first.
+Read [CONTRIBUTING.md](CONTRIBUTING.md) before opening a change. Release history
+and compatibility changes are in [CHANGELOG.md](CHANGELOG.md).
 
 ## License
 
-This project is licensed under the Apache License 2.0 - see the [LICENSE](LICENSE) file for details.
-
-## Notes
-
-- Always use environment variables or secure secret management solutions to handle sensitive information like API keys and AWS credentials.
-- Refer to the comprehensive documentation in the `docs/` directory for detailed usage examples and configuration options.
-- Make sure to keep your provider version updated for the latest features and bug fixes.
-- The provider now supports AWS cross-account access with `aws_session_name` and `aws_role_name` parameters in the model resource.
-- All example configurations have been consolidated into the documentation for better organization and maintenance.
+The provider uses [Apache License 2.0](LICENSE).
+[NOTICE](NOTICE) credits the upstream project.

@@ -13,7 +13,6 @@ const (
 
 	// Baseline client and development versions.
 	TerraformMinimum = "1.1.0"
-	OpenTofuMinimum  = "1.6.0"
 	GoMinimum        = "1.24.0"
 
 	// WriteOnlyClientMinimum applies only when optional write-only attributes are

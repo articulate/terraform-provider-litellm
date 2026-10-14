@@ -49,7 +49,6 @@ func TestInternalMetadataContract(t *testing.T) {
 
 	for name, value := range map[string]string{
 		"TerraformMinimum":       metadata.TerraformMinimum,
-		"OpenTofuMinimum":        metadata.OpenTofuMinimum,
 		"GoMinimum":              metadata.GoMinimum,
 		"WriteOnlyClientMinimum": metadata.WriteOnlyClientMinimum,
 		"TestedLiteLLMVersion":   metadata.TestedLiteLLMVersion,
@@ -238,10 +237,9 @@ func TestPublishedCompatibilityProseMatchesMetadata(t *testing.T) {
 				metadata.ProviderSource,
 				`version = "` + metadata.ExampleProviderConstraint + `"`,
 				">= " + metadata.TerraformMinimum + " (provider protocol " + metadata.ProtocolVersion + ")",
-				">= " + metadata.OpenTofuMinimum,
 				">= " + metadata.GoMinimum + " for provider development",
 				"Tested backend: exactly LiteLLM " + metadata.TestedLiteLLMVersion,
-				"require Terraform or OpenTofu " + metadata.WriteOnlyClientMinimum + " or later",
+				"require Terraform " + metadata.WriteOnlyClientMinimum + " or later",
 			},
 		},
 		"docs/index.md": {
@@ -250,10 +248,9 @@ func TestPublishedCompatibilityProseMatchesMetadata(t *testing.T) {
 				metadata.ProviderSource,
 				`version = "` + metadata.ExampleProviderConstraint + `"`,
 				"Terraform " + metadata.TerraformMinimum + " or later (provider protocol " + metadata.ProtocolVersion + ")",
-				"OpenTofu " + metadata.OpenTofuMinimum + " or later",
 				"Go " + metadata.GoMinimum + " or later",
 				"tests exactly LiteLLM " + metadata.TestedLiteLLMVersion,
-				"require Terraform or OpenTofu " + metadata.WriteOnlyClientMinimum + " or later",
+				"require Terraform " + metadata.WriteOnlyClientMinimum + " or later",
 			},
 		},
 		"examples/README.md": {
@@ -262,10 +259,9 @@ func TestPublishedCompatibilityProseMatchesMetadata(t *testing.T) {
 				metadata.ProviderSource,
 				"constrains the provider to `" + metadata.ExampleProviderConstraint + "`",
 				"requires Terraform >= " + metadata.TerraformMinimum,
-				"OpenTofu >= " + metadata.OpenTofuMinimum,
 				"Go >= " + metadata.GoMinimum,
 				"tested against exactly LiteLLM " + metadata.TestedLiteLLMVersion,
-				"require Terraform or OpenTofu >= " + metadata.WriteOnlyClientMinimum,
+				"require Terraform >= " + metadata.WriteOnlyClientMinimum,
 			},
 		},
 		"CHANGELOG.md [" + metadata.CurrentProviderVersion + "]": {
@@ -274,10 +270,9 @@ func TestPublishedCompatibilityProseMatchesMetadata(t *testing.T) {
 				metadata.ProviderSource,
 				"provider to `" + metadata.ExampleProviderConstraint + "`",
 				"Terraform >= " + metadata.TerraformMinimum,
-				"OpenTofu >= " + metadata.OpenTofuMinimum,
 				"Go >= " + metadata.GoMinimum,
 				"exactly LiteLLM " + metadata.TestedLiteLLMVersion,
-				"require Terraform or OpenTofu >= " + metadata.WriteOnlyClientMinimum,
+				"require Terraform >= " + metadata.WriteOnlyClientMinimum,
 			},
 		},
 	}

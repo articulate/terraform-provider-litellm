@@ -200,7 +200,7 @@ func (r *KeyResource) Schema(ctx context.Context, req resource.SchemaRequest, re
 				},
 			},
 			"key_wo": schema.StringAttribute{
-				Description: "Write-only predefined API key value. Terraform sends this value to LiteLLM but does not store it in plan or state artifacts. Use a cryptographically random, high-entropy key because its persisted SHA256 management identifier permits offline guesses of weak values. Requires Terraform 1.11 or compatible OpenTofu support.",
+				Description: "Write-only predefined API key value. Terraform sends this value to LiteLLM but does not store it in plan or state artifacts. Use a cryptographically random, high-entropy key because its persisted SHA256 management identifier permits offline guesses of weak values. Requires Terraform 1.11.",
 				Optional:    true,
 				Sensitive:   true,
 				WriteOnly:   true,

@@ -27,12 +27,6 @@ jobs:
           - product: terraform
             version: 1.11.4
             executable: terraform
-          - product: opentofu
-            version: 1.6.3
-            executable: tofu
-          - product: opentofu
-            version: 1.11.1
-            executable: tofu
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
         with:
@@ -47,9 +41,6 @@ jobs:
         run: |
           git fetch --no-tags origin "$DEFAULT_BRANCH"
           git merge-base --is-ancestor "$GITHUB_SHA" "origin/$DEFAULT_BRANCH"
-          base=$(git rev-parse "origin/$DEFAULT_BRANCH")
-          python3 internal_testing/upgrade_matrix/verify_runtime_parity.py \
-            --event release --base "$base" --head "$GITHUB_SHA"
       - name: Download Go modules for the offline contract check
         # contract-check type-checks the provider with GOPROXY=off, so every
         # module must already be in the module cache; a cold setup-go cache

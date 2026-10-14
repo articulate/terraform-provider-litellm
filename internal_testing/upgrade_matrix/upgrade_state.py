@@ -16,7 +16,6 @@ from typing import Any, Dict, Mapping, Optional, Sequence, Tuple
 
 
 PROVIDER_SOURCE = "registry.terraform.io/ncecere/litellm"
-OPENTOFU_PROVIDER_SOURCE = "registry.opentofu.org/ncecere/litellm"
 _COLLECTION_MODES = {"list", "set", "map"}
 _NESTING_MODES = {"single", *_COLLECTION_MODES}
 _MISSING = object()
@@ -1063,10 +1062,9 @@ def load_json(path: Path) -> Any:
 
 def _current_provider_schema(schema_document: Mapping[str, Any]) -> Mapping[str, Any]:
     provider_schemas = _mapping(schema_document.get("provider_schemas"), "provider_schemas")
-    matches = [source for source in (PROVIDER_SOURCE, OPENTOFU_PROVIDER_SOURCE) if source in provider_schemas]
-    if len(matches) != 1:
-        raise UpgradeStateError("current provider schema must have one exact supported source")
-    return _mapping(provider_schemas[matches[0]], "provider schema")
+    if PROVIDER_SOURCE not in provider_schemas:
+        raise UpgradeStateError("current provider schema must have the exact Terraform source")
+    return _mapping(provider_schemas[PROVIDER_SOURCE], "provider schema")
 
 
 def compare_files(args: argparse.Namespace) -> int:

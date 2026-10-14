@@ -1,4 +1,4 @@
-# Terraform/OpenTofu >=1.11 only: write-only predefined key protocol coverage.
+# Terraform >=1.11 only: write-only predefined key protocol coverage.
 variable "acceptance_key_wo" {
   type      = string
   sensitive = true
