@@ -17,10 +17,17 @@ The provider code is the same as upstream v2.2.0.
 - The provider source is now `terraform.articulate.team/articulate/litellm`. Run
   `terraform state replace-provider registry.terraform.io/ncecere/litellm terraform.articulate.team/articulate/litellm`
   once in each existing state before the first plan. Resources, IDs, and imports do not change.
+  For OpenTofu, run `tofu state replace-provider` with the same target. Use the source address recorded in state:
+  `registry.opentofu.org/ncecere/litellm` for the short `ncecere/litellm` source, or
+  `registry.terraform.io/ncecere/litellm` for an explicit Terraform Registry source.
 - Published examples constrain the provider to `>= 3.0.0, < 4.0.0`.
 - Supported clients are unchanged: Terraform >= 1.1.0 and OpenTofu >= 1.6.0. Provider development
   requires Go >= 1.24.0. The acceptance harness tests exactly LiteLLM 1.104.0. The optional
   write-only attributes require Terraform or OpenTofu >= 1.11.0.
+
+### Security
+- Provider credential handling and resource lifecycles are unchanged from upstream v2.2.0.
+- This repository inherits the Articulate organization security policy.
 
 ### Changed
 - Go module path is now `github.com/articulate/terraform-provider-litellm`.

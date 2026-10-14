@@ -5,7 +5,7 @@
 package metadata
 
 const (
-	// ProviderSource is the exact source published in the Terraform Registry.
+	// ProviderSource is the exact source published in the provider registry.
 	ProviderSource = "terraform.articulate.team/articulate/litellm"
 
 	// ProtocolVersion is the Terraform provider protocol advertised by releases.
@@ -28,7 +28,7 @@ const (
 	CurrentProviderVersion = "3.0.0"
 
 	// MinimumProviderVersion is the stable lower bound for published examples.
-	// It must not move merely because a later compatible 2.x release is tagged.
+	// It must not move merely because a later compatible 3.x release is tagged.
 	MinimumProviderVersion    = "3.0.0"
 	ExampleProviderConstraint = ">= 3.0.0, < 4.0.0"
 	TerraformRequiredVersion  = ">= 1.1.0"

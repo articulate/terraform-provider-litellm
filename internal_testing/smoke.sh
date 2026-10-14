@@ -117,7 +117,6 @@ cat >"$SMOKE_DIR/terraformrc" <<EOF
 provider_installation {
   dev_overrides {
     "terraform.articulate.team/articulate/litellm" = $provider_dir_hcl
-    "registry.opentofu.org/ncecere/litellm"  = $provider_dir_hcl
   }
   direct {}
 }

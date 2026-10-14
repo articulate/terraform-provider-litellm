@@ -68,13 +68,25 @@ The baseline clients are Terraform 1.1.0 or later (provider protocol 6.0) and Op
 
 The optional write-only attributes `litellm_key.key_wo`, `litellm_key.send_invite_email`, `litellm_user.send_invite_email`, and `litellm_jwt_key_mapping.key_wo` require Terraform or OpenTofu 1.11.0 or later only when configured; they do not raise the global client minimum. `litellm_jwt_key_mapping.key_hash` maps a key without a write-only attribute. Run `terraform init -upgrade` or `tofu init -upgrade` after updating the provider constraint.
 
-The published provider source is exactly `terraform.articulate.team/articulate/litellm`. This provider is Articulate's fork of [ncecere/terraform-provider-litellm](https://github.com/ncecere/terraform-provider-litellm). The resource types and state format are the same. State created with the upstream `registry.terraform.io/ncecere/litellm` source must move to the fork's address before the first plan. Run this command once in each state:
+The published provider source is exactly `terraform.articulate.team/articulate/litellm`. This provider is Articulate's fork of [ncecere/terraform-provider-litellm](https://github.com/ncecere/terraform-provider-litellm). The resource types and state format are the same. Existing upstream state must move to the fork's address before the first plan. For Terraform, run this command once in each state:
 
 ```sh
 terraform state replace-provider \
   registry.terraform.io/ncecere/litellm \
   terraform.articulate.team/articulate/litellm
 ```
+
+For OpenTofu state created with the short `ncecere/litellm` source, run:
+
+```sh
+tofu state replace-provider \
+  registry.opentofu.org/ncecere/litellm \
+  terraform.articulate.team/articulate/litellm
+```
+
+If the OpenTofu configuration used an explicit Terraform Registry source, use
+`registry.terraform.io/ncecere/litellm` as the source argument instead. Match the
+source address recorded in state. Both commands use the same target.
 
 ## Provider Arguments
 
