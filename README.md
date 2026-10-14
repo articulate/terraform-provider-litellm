@@ -2,7 +2,7 @@
   <img src="assets/logo.png" alt="LiteLLM Terraform provider logo" width="144" height="144">
 </p>
 
-<h1 align="center">LiteLLM Terraform provider</h1>
+<h1 align="center">LiteLLM Terraform Provider</h1>
 
 <p align="center">Manage your LiteLLM gateway with Terraform or OpenTofu.</p>
 
