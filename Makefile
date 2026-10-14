@@ -1,7 +1,7 @@
-HOSTNAME ?= registry.terraform.io
-NAMESPACE ?= ncecere
+HOSTNAME ?= terraform.articulate.team
+NAMESPACE ?= articulate
 NAME ?= litellm
-VERSION ?= 2.2.0
+VERSION ?= 3.0.0
 OS_ARCH ?= $(shell go env GOOS)_$(shell go env GOARCH)
 
 default: install

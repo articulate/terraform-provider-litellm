@@ -3,7 +3,7 @@ terraform {
 
   required_providers {
     litellm = {
-      source = "registry.terraform.io/ncecere/litellm"
+      source = "terraform.articulate.team/articulate/litellm"
     }
   }
 }

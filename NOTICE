@@ -1,0 +1,6 @@
+terraform-provider-litellm
+Copyright Articulate Global, LLC
+
+This product is a fork of terraform-provider-litellm by Nicholas Cecere
+(https://github.com/ncecere/terraform-provider-litellm), licensed under the
+Apache License, Version 2.0.

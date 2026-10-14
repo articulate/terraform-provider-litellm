@@ -14,13 +14,13 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/articulate/terraform-provider-litellm/internal/metadata"
 	"github.com/hashicorp/hcl/v2"
 	"github.com/hashicorp/hcl/v2/hclsyntax"
-	"github.com/nicholas-cecere/terraform-provider-litellm/internal/metadata"
 	"github.com/zclconf/go-cty/cty"
 )
 
-const independentRegistryAddress = "registry.terraform.io/ncecere/litellm"
+const independentRegistryAddress = "terraform.articulate.team/articulate/litellm"
 
 var (
 	publishedEntrypoints = []string{
@@ -122,7 +122,7 @@ func TestMakeInstallDefaultsMatchPublishedContract(t *testing.T) {
 	}
 
 	readme := readFile(t, filepath.Join(root, "README.md"))
-	if !strings.Contains(readme, "git clone https://github.com/ncecere/terraform-provider-litellm.git") {
+	if !strings.Contains(readme, "git clone https://github.com/articulate/terraform-provider-litellm.git") {
 		t.Fatal("README clone command does not use the canonical repository URL")
 	}
 	if !strings.Contains(readme, "make install") {

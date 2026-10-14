@@ -1,0 +1,12 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": ["local>articulate/org-renovate"],
+  "automerge": true,
+  "packageRules": [
+    {
+      "description": "Review Terraform provider updates by hand",
+      "matchManagers": ["terraform"],
+      "automerge": false
+    }
+  ]
+}

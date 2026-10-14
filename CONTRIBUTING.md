@@ -9,20 +9,20 @@ Thank you for contributing to the LiteLLM Terraform provider.
 - For behavior that depends on LiteLLM, identify the exact supported upstream version and endpoint contract.
 - Never include API keys, access tokens, customer identifiers, Terraform state, private logs, or local variable files.
 
-For security vulnerabilities, follow [SECURITY.md](SECURITY.md) instead of opening a public issue.
+For security vulnerabilities, follow the [Articulate security policy](https://github.com/articulate/.github/blob/main/SECURITY.md) instead of opening a public issue.
 
 ## Development setup
 
 Development requires Go 1.24 or newer. Terraform 1.1 or newer and OpenTofu 1.6 or newer are supported clients. The tested backend is LiteLLM 1.104.0.
 
 ```bash
-git clone https://github.com/ncecere/terraform-provider-litellm.git
+git clone https://github.com/articulate/terraform-provider-litellm.git
 cd terraform-provider-litellm
 go mod download
 go test ./...
 ```
 
-The repository's historical Go module identifier is retained for provider-build compatibility. This repository is distributed as a Terraform provider executable and does not expose a supported Go library API. Consumers should use `registry.terraform.io/ncecere/litellm`, not import the Go module.
+This repository is distributed as a Terraform provider executable and does not expose a supported Go library API. Consumers should use `terraform.articulate.team/articulate/litellm`, not import the Go module.
 
 ## Validation
 

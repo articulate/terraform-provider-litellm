@@ -6,7 +6,25 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+
+	"github.com/articulate/terraform-provider-litellm/internal/metadata"
 )
+
+func TestCurrentReleaseChangelogProducesReleaseNotes(t *testing.T) {
+	t.Parallel()
+
+	var stdout, stderr bytes.Buffer
+	status := run([]string{
+		"--tag", "v" + metadata.CurrentProviderVersion,
+		"--changelog", "../../../CHANGELOG.md",
+	}, &stdout, &stderr)
+	if status != 0 {
+		t.Fatalf("current release notes failed: %s", stderr.String())
+	}
+	if stdout.Len() == 0 {
+		t.Fatal("current release notes are empty")
+	}
+}
 
 const validChangelog = `# Changelog
 
