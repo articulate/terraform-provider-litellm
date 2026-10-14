@@ -209,7 +209,8 @@ disposable LiteLLM stack and the explicit safety confirmations in
 [the test harness guide](internal_testing/README.md). Private smoke logs are
 written under `internal_testing/.smoke-logs/`.
 
-Read [CONTRIBUTING.md](CONTRIBUTING.md) before opening a change. Release history
+Read [CONTRIBUTING.md](CONTRIBUTING.md) before opening a change. Maintainers publish
+versions through the [release guide](docs/development/releases.md). Release history
 and compatibility changes are in [CHANGELOG.md](CHANGELOG.md).
 
 ## License

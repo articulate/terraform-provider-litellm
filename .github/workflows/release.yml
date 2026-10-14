@@ -6,13 +6,17 @@ on:
     tags:
       - 'v*'
 
+concurrency:
+  group: litellm-provider-release
+  cancel-in-progress: false
+
 permissions:
   contents: read
 
 jobs:
   full-cli-gate:
     name: Exact-tag full matrix (${{ matrix.product }} ${{ matrix.version }})
-    if: github.repository == 'ncecere/terraform-provider-litellm'
+    if: github.repository == 'articulate/terraform-provider-litellm'
     runs-on: ubuntu-latest
     timeout-minutes: 120
     permissions:
@@ -100,12 +104,15 @@ jobs:
           if-no-files-found: error
 
   goreleaser:
-    name: Build and sign exact gated tag
+    name: Publish exact gated tag
+    if: github.repository == 'articulate/terraform-provider-litellm'
     needs: full-cli-gate
+    environment: provider-release
     runs-on: ubuntu-latest
     timeout-minutes: 30
     permissions:
       contents: write
+      id-token: write
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
         with:
@@ -127,23 +134,31 @@ jobs:
             -tag "${GITHUB_REF_NAME}" \
             -changelog CHANGELOG.md \
             -output "${RUNNER_TEMP}/release-notes.md"
+      - name: Require the dedicated signing fingerprint
+        env:
+          EXPECTED_FINGERPRINT: ${{ vars.PROVIDER_GPG_FINGERPRINT }}
+        run: |
+          if [[ ! "$EXPECTED_FINGERPRINT" =~ ^[0-9A-F]{40}$ ]]; then
+            echo 'Set PROVIDER_GPG_FINGERPRINT to the full uppercase fingerprint.' >&2
+            exit 1
+          fi
       - name: Import GPG key
         uses: crazy-max/ghaction-import-gpg@01dd5d3ca463c7f10f7f4f7b4f177225ac661ee4 # v6.1.0
         id: import_gpg
         with:
           gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
           passphrase: ${{ secrets.PASSPHRASE }}
-      - name: Verify Registry signing-key continuity
+      - name: Verify the dedicated signing key
         env:
+          EXPECTED_FINGERPRINT: ${{ vars.PROVIDER_GPG_FINGERPRINT }}
           IMPORTED_FINGERPRINT: ${{ steps.import_gpg.outputs.fingerprint }}
         run: |
-          expected="$(jq -er '.previous_provider.signing_key.fingerprint' internal_testing/upgrade_matrix/tools.lock.json)"
           actual="$(printf '%s' "$IMPORTED_FINGERPRINT" | tr -d '[:space:]' | tr '[:lower:]' '[:upper:]')"
-          if ! printf '%s' "$actual" | grep -Eq '^[0-9A-F]{40}$' || [ "$actual" != "$expected" ]; then
-            echo 'Imported release key does not match the reviewed Registry signing key.' >&2
+          if [ "$actual" != "$EXPECTED_FINGERPRINT" ]; then
+            echo 'Imported key does not match the dedicated release fingerprint.' >&2
             exit 1
           fi
-      - name: Run GoReleaser only after all four full lanes
+      - name: Build and sign only after both Terraform lanes
         uses: goreleaser/goreleaser-action@286f3b13b1b49da4ac219696163fb8c1c93e1200 # v6.0.0
         with:
           distribution: goreleaser
@@ -152,3 +167,56 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           GPG_FINGERPRINT: ${{ steps.import_gpg.outputs.fingerprint }}
+      - name: Stage and check the registry upload
+        run: |
+          version=${GITHUB_REF_NAME#v}
+          cp terraform-registry-manifest.json "dist/terraform-provider-litellm_${version}_manifest.json"
+          cd dist
+          sha256sum --check "terraform-provider-litellm_${version}_SHA256SUMS"
+      - name: Install checksum-pinned boring-registry
+        run: |
+          archive="$RUNNER_TEMP/boring-registry.tar.gz"
+          curl --fail --silent --show-error --location --connect-timeout 10 --max-time 120 \
+            https://github.com/boring-registry/boring-registry/releases/download/v0.16.6/boring-registry_0.16.6_Linux_x86_64.tar.gz \
+            --output "$archive"
+          echo "9d0b17771ace559de21440d2e25e9dd66d3818f476cf94212413fbb79e6b11e9  $archive" | sha256sum --check
+          tar -xzf "$archive" -C "$RUNNER_TEMP" boring-registry
+      - name: Authenticate for the LiteLLM registry prefix
+        uses: aws-actions/configure-aws-credentials@00943011d9042930efac3dcd3a170e4273319bc8 # v5.1.0
+        with:
+          aws-region: us-east-1
+          role-to-assume: arn:aws:iam::233118049495:role/github-actions
+          allowed-account-ids: '233118049495'
+          role-session-name: litellm-release-${{ github.run_id }}
+          inline-session-policy: >-
+            {
+              "Version": "2012-10-17",
+              "Statement": [
+                {
+                  "Effect": "Allow",
+                  "Action": "s3:ListBucket",
+                  "Resource": "arn:aws:s3:::tf-registry-us-east-1-233118049495"
+                },
+                {
+                  "Effect": "Allow",
+                  "Action": "s3:GetObject",
+                  "Resource": "arn:aws:s3:::tf-registry-us-east-1-233118049495/providers/articulate/signing-keys.json"
+                },
+                {
+                  "Effect": "Allow",
+                  "Action": ["s3:GetObject", "s3:PutObject", "s3:AbortMultipartUpload"],
+                  "Resource": "arn:aws:s3:::tf-registry-us-east-1-233118049495/providers/articulate/litellm/*"
+                }
+              ]
+            }
+      - name: Upload the signed provider to the registry
+        run: |
+          "$RUNNER_TEMP/boring-registry" upload provider \
+            --storage-s3-bucket tf-registry-us-east-1-233118049495 \
+            --storage-s3-region us-east-1 \
+            --namespace articulate \
+            --filename-sha256sums "$GITHUB_WORKSPACE/dist/terraform-provider-litellm_${GITHUB_REF_NAME#v}_SHA256SUMS"
+      - name: Publish the GitHub draft
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release edit "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --draft=false

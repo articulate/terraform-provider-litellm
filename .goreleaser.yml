@@ -1,5 +1,6 @@
 # Visit https://goreleaser.com for configuration documentation.
 version: 2
+project_name: terraform-provider-litellm
 
 builds:
   - env:
@@ -51,6 +52,8 @@ signs:
       - "${artifact}"
 
 release:
+  draft: true
+  use_existing_draft: true
   extra_files:
     - glob: 'terraform-registry-manifest.json'
       name_template: '{{ .ProjectName }}_{{ .Version }}_manifest.json'

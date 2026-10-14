@@ -66,13 +66,12 @@ sh internal_testing/upgrade_matrix/run.sh local
 internal_testing/compose.sh down -v
 ```
 
-The workflow jobs remain restricted to the upstream repository. Articulate's
-fork does not run the assembly, local execution, or release jobs. In the upstream
-repository, pull requests run assembly, and non-PR events can run both pinned
-Terraform CLIs against a new local backend. Tag releases run both full Terraform
-lanes against the exact tagged SHA before GPG import, build, or signing. Each
-gate job has read-only contents permission and a wall timeout. No workflow
-enables the remote mutation lane.
+The assembly and local-execution workflow jobs remain restricted to the upstream
+repository. Articulate tag releases run both full Terraform lanes against the
+exact tagged SHA before GPG import, build, or signing. Each release gate has
+read-only contents permission and a wall timeout. No workflow enables the remote
+mutation lane. See the [release guide](../../docs/development/releases.md) for
+publication setup and recovery.
 
 ## Import ownership
 
