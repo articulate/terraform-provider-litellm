@@ -34,9 +34,10 @@ First release of the Articulate fork of
 The provider code is the same as upstream v2.2.0.
 
 ### Upgrade Notes
-- The provider source is now `terraform.articulate.team/articulate/litellm`. Update
-  the source and version constraint, run `terraform init -upgrade`, and review the
-  plan for unexpected replacements or key rotation. A plan with no changes does not
+- The provider source is now `terraform.articulate.team/articulate/litellm`. Follow
+  the [migration procedure](README.md#migrate-from-upstream): update the source and
+  version constraint, initialize, and review the plan for unexpected replacements
+  or key rotation. A plan with no changes does not
   show the provider address recorded in state; inspect it before you treat the
   migration as complete. To change a stored upstream reference, run
   `terraform state replace-provider registry.terraform.io/ncecere/litellm terraform.articulate.team/articulate/litellm`.

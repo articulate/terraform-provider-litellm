@@ -115,9 +115,16 @@ the provider or proxy version.
 The fork keeps the resource types, state format, IDs, and import formats of
 upstream v2.2.0. The provider source address changes.
 
-Update the source and version constraint in configuration, run
-`terraform init -upgrade`, and run a plan. Review the plan for unexpected
-replacements or key rotation before you apply it. The [3.0.0 upgrade
+Update the source and version constraint in configuration, then initialize
+and run a plan:
+
+```sh
+terraform init -upgrade
+terraform plan
+```
+
+Review the plan for unexpected replacements or key rotation before you apply
+it. The [3.0.0 upgrade
 notes](CHANGELOG.md#300) describe the migration and compatibility baseline.
 
 A plan with no changes validates the configuration against the fork. It does
