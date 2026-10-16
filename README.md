@@ -60,9 +60,9 @@ terraform plan
 The plan reports `model_count`, the number of model configurations visible to
 your key. This example reads the proxy without creating or changing its resources.
 
-For an existing upstream configuration, complete the [state migration](#migrate-from-upstream)
-before the first plan. After changing a version constraint, run
-`terraform init -upgrade`.
+For an existing upstream configuration, follow
+[Migrate from upstream](#migrate-from-upstream). After changing a version
+constraint, run `terraform init -upgrade`.
 
 ### Manage a team and key
 
@@ -113,10 +113,24 @@ the provider or proxy version.
 ## Migrate from upstream
 
 The fork keeps the resource types, state format, IDs, and import formats of
-upstream v2.2.0. The provider source address changes. Every existing state must
-replace its upstream address before the first plan with the fork.
+upstream v2.2.0. The provider source address changes.
 
-For Terraform:
+Update the source and version constraint in configuration, then initialize
+and run a plan:
+
+```sh
+terraform init -upgrade
+terraform plan
+```
+
+Review the plan for unexpected replacements or key rotation before you apply
+it. The [3.0.0 upgrade
+notes](CHANGELOG.md#300) describe the migration and compatibility baseline.
+
+A plan with no changes validates the configuration against the fork. It does
+not show which provider address the state records. Inspect the provider
+references in state before you treat the state migration as complete. To change
+a stored upstream reference, run:
 
 ```sh
 terraform state replace-provider \
@@ -125,10 +139,6 @@ terraform state replace-provider \
 ```
 
 The command changes the provider association without recreating gateway resources.
-
-Update the source and version constraint in configuration, then initialize
-and inspect the plan. The [3.0.0 upgrade notes](CHANGELOG.md#300) describe the
-migration and compatibility baseline.
 
 ## Resource reference
 
