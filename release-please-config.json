@@ -1,0 +1,15 @@
+{
+  "$schema": "https://raw.githubusercontent.com/googleapis/release-please/v17.6.0/schemas/config.json",
+  "bootstrap-sha": "a6f4dfc88b2031420096d54537c943e0f75ae00f",
+  "include-component-in-tag": false,
+  "include-v-in-tag": true,
+  "draft": true,
+  "force-tag-creation": true,
+  "pull-request-header": "Review this release and add non-empty Upgrade Notes and Security subsections to its CHANGELOG.md entry before merging. CI and publication require both.",
+  "packages": {
+    ".": {
+      "release-type": "go",
+      "package-name": "terraform-provider-litellm"
+    }
+  }
+}

@@ -101,7 +101,7 @@ func extractReleaseNotes(changelog []byte, version string) ([]byte, error) {
 		return nil, errors.New("requested version is not an exact semantic version")
 	}
 
-	exactTitle := regexp.MustCompile(`^\[` + regexp.QuoteMeta(version) + `\](?: - [0-9]{4}-[0-9]{2}-[0-9]{2})?$`)
+	exactTitle := regexp.MustCompile(`^\[` + regexp.QuoteMeta(version) + `\](?: - [0-9]{4}-[0-9]{2}-[0-9]{2}|\(https://[^\s()]+\) \([0-9]{4}-[0-9]{2}-[0-9]{2}\))?$`)
 	headings := markdownHeadings(changelog)
 	var matches []markdownHeading
 	for _, heading := range headings {
