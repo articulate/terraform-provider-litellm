@@ -365,6 +365,7 @@ func keyHasNonSemanticConfigurationChange(config, state KeyResourceModel) bool {
 	}
 	for _, value := range []struct{ config, state types.List }{
 		{config.Models, state.Models}, {config.AllowedRoutes, state.AllowedRoutes},
+		{config.VectorStores, state.VectorStores},
 		{config.AllowedPassthroughRoutes, state.AllowedPassthroughRoutes},
 		{config.AllowedCacheControls, state.AllowedCacheControls},
 		{config.Guardrails, state.Guardrails}, {config.Prompts, state.Prompts},
@@ -973,6 +974,7 @@ func partialKeySemanticRecoveryState(data KeyResourceModel, identity string, wri
 	}
 	for _, value := range []*types.List{
 		&data.Models, &data.AllowedRoutes, &data.AllowedPassthroughRoutes, &data.AllowedCacheControls,
+		&data.VectorStores,
 		&data.Guardrails, &data.Prompts, &data.EnforcedParams, &data.Tags,
 	} {
 		if value.IsUnknown() {
