@@ -16,16 +16,26 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@fbc6f3992d24b796d5a048ff273f7fcc4a7b6c09 # v5.1.0
+        with:
+          persist-credentials: false
       - uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6.5.0
         with:
           go-version-file: 'go.mod'
-          cache: true
+          cache: false
       - uses: hashicorp/setup-terraform@5e8dbf3c6d9deaf4193ca7a8fb23f2ac83bb6c85 # v4.0.0
         with:
           terraform_version: 1.15.9
           terraform_wrapper: false
       - name: Metadata, HCL, entrypoint, and release-note contracts
         run: go test . ./internal/contract ./internal/cmd/release-notes -count=1
+      - name: Validate release manifest notes
+        shell: bash
+        run: |
+          version="$(python3 -c 'import json; print(json.load(open(".release-please-manifest.json"))["."])')"
+          go run ./internal/cmd/release-notes \
+            -tag "v${version}" \
+            -changelog CHANGELOG.md \
+            -output "$RUNNER_TEMP/release-notes.md"
       - name: Upgrade harness regression tests
         run: python3 -m unittest discover -s internal_testing/upgrade_matrix/tests -p 'test_*.py'
       - name: Offline LiteLLM API contract check
@@ -86,6 +96,8 @@ jobs:
         id: coverage
       - name: Test summary
         if: ${{ !cancelled() }}
+        env:
+          COVERAGE_TOTAL: ${{ steps.coverage.outputs.coverage_total }}
         run: |
           {
             echo '## Test results'
@@ -99,7 +111,7 @@ jobs:
             fi
             echo '```'
             echo ''
-            echo "## Coverage: ${{ steps.coverage.outputs.coverage_total }}"
+            echo "## Coverage: ${COVERAGE_TOTAL}"
             if [ -f coverage.txt ]; then
               echo ''
               echo '<details><summary>Per-function coverage</summary>'

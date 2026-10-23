@@ -56,10 +56,26 @@ an absent upload destination from an inaccessible object in a
 
 ## Publish a version
 
+Release Please maintains the next version and changelog in a release PR after
+conventional commits reach `main`. Just before merging that PR, add non-empty
+`Upgrade Notes` and `Security` subsections to its changelog entry. CI checks
+the manifest's exact version with the same extractor that publication uses.
+New commits on `main` can regenerate the release PR and overwrite those edits.
+Merging creates a draft GitHub release and its tag. The existing tag workflow
+runs acceptance and signing, replaces the draft body with the reviewed changelog
+entry, then publishes only after registry upload succeeds.
+
+The automation starts after the manual `3.1.0` release. Before merging its
+configuration, grant this repository access to `RUNNER_SMALL`,
+`AUTOMATION_CLIENT_ID`, and `AUTOMATION_PRIVATE_KEY`. The App token needs contents
+and pull-request write permissions so its release PRs and tags trigger CI.
+Allow that App in the `Release tag creation` ruleset. Keep release tags immutable.
+
+For a manual release:
+
 1. Prepare the version's `CHANGELOG.md` section in a reviewed PR. Include
    non-empty `Upgrade Notes` and `Security` subsections. The first fork release
-   uses the existing `3.0.1` section. This bootstrap uses reviewed tags rather
-   than automatic release PRs.
+   uses the existing `3.0.1` section.
 2. After CI passes on the chosen main commit, create and push its version tag.
    For the first release, use `v3.0.1`. The unpublished `v3.0.0` tag failed its
    release gate. Never move an existing release tag.

@@ -79,6 +79,26 @@ func TestVersionFromTag(t *testing.T) {
 	}
 }
 
+func TestReleasePleaseChangelogHeading(t *testing.T) {
+	t.Parallel()
+	heading := "## [1.2.3](https://github.com/articulate/terraform-provider-litellm/compare/v1.2.2...v1.2.3) (2026-01-02)"
+	changelog := strings.Replace(validChangelog, "## [1.2.3] - 2026-01-02", heading, 1)
+	notes, err := extractReleaseNotes([]byte(changelog), "1.2.3")
+	if err != nil {
+		t.Fatalf("Release Please heading rejected: %v", err)
+	}
+	if !strings.Contains(string(notes), "Exact release content.") || strings.Contains(string(notes), "Older notes.") {
+		t.Fatalf("wrong version selected: %s", notes)
+	}
+	if _, err := extractReleaseNotes([]byte(changelog), "1.2.2"); err != nil {
+		t.Fatalf("historical heading rejected: %v", err)
+	}
+	duplicate := strings.Replace(changelog, "## [Unreleased]", "## [1.2.3]", 1)
+	if _, err := extractReleaseNotes([]byte(duplicate), "1.2.3"); err == nil {
+		t.Fatal("duplicate linked and plain version headings accepted")
+	}
+}
+
 func TestExtractReleaseNotesExactSection(t *testing.T) {
 	t.Parallel()
 
