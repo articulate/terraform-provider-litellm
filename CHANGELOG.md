@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [3.1.0]
+
+### Upgrade Notes
+- `litellm_key.vector_stores` accepts vector-store IDs, not names. Omit it to
+  retain gateway defaults. Set `[]` to remove the key-level restriction;
+  team restrictions still apply.
+
+### Security
+- Explicit vector-store grants let migrated keys retain their knowledge-store
+  access. Updates preserve sibling object permissions, including MCP grants.
+
+### Added
+- Manage key-level vector-store grants with `litellm_key.vector_stores`.
+
 ## [3.0.1]
 
 First published release of the Articulate fork. The `v3.0.0` tag failed its
