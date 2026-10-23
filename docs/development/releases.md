@@ -65,11 +65,12 @@ Merging creates a draft GitHub release and its tag. The existing tag workflow
 runs acceptance and signing, replaces the draft body with the reviewed changelog
 entry, then publishes only after registry upload succeeds.
 
-The automation starts after the manual `3.1.0` release. Before merging its
-configuration, grant this repository access to `RUNNER_SMALL`,
-`AUTOMATION_CLIENT_ID`, and `AUTOMATION_PRIVATE_KEY`. The App token needs contents
-and pull-request write permissions so its release PRs and tags trigger CI.
-Allow that App in the `Release tag creation` ruleset. Keep release tags immutable.
+The automation uses a GitHub-hosted runner and the built-in `GITHUB_TOKEN`.
+It explicitly dispatches CI on the release PR branch and publication on the new
+tag, because token-generated events do not start downstream workflows automatically.
+Publication accepts tag refs only and retains the environment approval gate.
+The `Release tag creation` ruleset must permit the automation to create tags.
+Keep release tags immutable.
 
 For a manual release:
 
