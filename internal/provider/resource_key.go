@@ -137,6 +137,7 @@ type KeyResourceModel struct {
 	SendInviteEmail          types.Bool    `tfsdk:"send_invite_email"`
 	Models                   types.List    `tfsdk:"models"`
 	AllowedRoutes            types.List    `tfsdk:"allowed_routes"`
+	VectorStores             types.List    `tfsdk:"vector_stores"`
 	AllowedPassthroughRoutes types.List    `tfsdk:"allowed_passthrough_routes"`
 	MaxBudget                types.Float64 `tfsdk:"max_budget"`
 	UserID                   types.String  `tfsdk:"user_id"`
@@ -231,6 +232,12 @@ func (r *KeyResource) Schema(ctx context.Context, req resource.SchemaRequest, re
 			},
 			"allowed_routes": schema.ListAttribute{
 				Description: "List of allowed API routes.",
+				Optional:    true,
+				Computed:    true,
+				ElementType: types.StringType,
+			},
+			"vector_stores": schema.ListAttribute{
+				Description: "Vector-store IDs allowed by this key's object_permission. Omit to retain gateway defaults. An explicit empty list removes the key-level vector-store restriction. Team restrictions still apply.",
 				Optional:    true,
 				Computed:    true,
 				ElementType: types.StringType,
@@ -1237,6 +1244,8 @@ func (r *KeyResource) buildKeyRequest(ctx context.Context, data *KeyResourceMode
 	diagnostics.Append(converted...)
 	allowedRoutes, _, converted := strictTerraformStringList(ctx, data.AllowedRoutes, path.Root("allowed_routes"))
 	diagnostics.Append(converted...)
+	vectorStores, vectorStoresState, converted := strictTerraformStringList(ctx, data.VectorStores, path.Root("vector_stores"))
+	diagnostics.Append(converted...)
 	allowedPassthroughRoutes, _, converted := strictTerraformStringList(ctx, data.AllowedPassthroughRoutes, path.Root("allowed_passthrough_routes"))
 	diagnostics.Append(converted...)
 	allowedCacheControls, _, converted := strictTerraformStringList(ctx, data.AllowedCacheControls, path.Root("allowed_cache_controls"))
@@ -1268,6 +1277,9 @@ func (r *KeyResource) buildKeyRequest(ctx context.Context, data *KeyResourceMode
 	}
 
 	keyReq := make(map[string]interface{})
+	if vectorStoresState == collectionValueEmpty || vectorStoresState == collectionValuePopulated {
+		keyReq["object_permission"] = map[string]interface{}{"vector_stores": vectorStores}
+	}
 
 	// String fields - check IsNull, IsUnknown, and empty string
 	if !data.Key.IsNull() && !data.Key.IsUnknown() && data.Key.ValueString() != "" {
@@ -1785,6 +1797,17 @@ func (r *KeyResource) readKeyWithTransport(ctx context.Context, data *KeyResourc
 	}
 
 	if err := projectKeyStringList(ctx, info, "allowed_routes", &data.AllowedRoutes); err != nil {
+		return err
+	}
+	permission := map[string]interface{}{}
+	if raw, present := info["object_permission"]; present && raw != nil {
+		var ok bool
+		permission, ok = raw.(map[string]interface{})
+		if !ok {
+			return fmt.Errorf("key object_permission must be an object")
+		}
+	}
+	if err := projectKeyStringList(ctx, permission, "vector_stores", &data.VectorStores); err != nil {
 		return err
 	}
 

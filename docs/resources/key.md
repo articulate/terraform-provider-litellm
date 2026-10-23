@@ -258,6 +258,7 @@ The following arguments are supported:
 * `service_account_id` - (Optional, ForceNew) Identifier for a team-owned service account. When set, the provider calls the service-account API and defaults `key_alias` to this value.
 
 * `allowed_routes` - (Optional) List of LiteLLM proxy routes this key is allowed to call.
+* `vector_stores` - (Optional, Computed) Vector-store IDs in the key's `object_permission`. Omit to retain gateway defaults. An explicit empty list removes the key-level restriction; team restrictions still apply. Other object-permission fields are preserved on update.
 
 * `allowed_passthrough_routes` - (Optional) Pass-through endpoints the key is allowed to access.
 

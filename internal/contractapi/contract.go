@@ -1276,7 +1276,7 @@ var reviewedPaginationFunctions = map[string]bool{
 // change must be independently reviewed before its new proof is admitted here.
 var reviewedRawIdentityProofs = map[string]string{
 	"keyDataSourceLookup":          "dd8f488c14a290a4f964c4df826ff3a208258924ad125c496460ce470fb2b9b6",
-	"keyLookupIdentifier":          "a795914058cbb0c7b1eda78d245c54a5dbb7fc7eca64bc119ba1a8ba09100d0f",
+	"keyLookupIdentifier":          "ec8d3f1b3c78160878a2a1cd42b935731d22607c61b30cc7ed818a97401151b8",
 	"keyBlockStateIdentity":        "953aac18ec2f2a00f5ebe8f415acc6ac7fda976f2a59b744b92d144784147e81",
 	"batchTeamID":                  "4d33352cd28a2ed7ace72b3389a710a2f54336d6846d030152b306218f1006c2",
 	"teamMemberConfiguredIdentity": "dd942f6eae7870a8fc4d732fc741bfe34540e13f15d424afa892c9a20b4bd205",
