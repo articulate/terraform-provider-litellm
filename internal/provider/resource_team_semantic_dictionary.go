@@ -590,8 +590,15 @@ func projectTeamLegacyMetadataWithSemantic(ctx context.Context, current types.Ma
 			value = restored[name]
 			filtered[name] = value
 		}
-		switch value.(type) {
+		switch value := value.(type) {
 		case string, map[string]interface{}, []interface{}, nil:
+		case bool:
+			// Legacy writes send "false" back as a string. LiteLLM checks
+			// disable_global_guardrails with `is True`, so only its false value
+			// survives that round trip unchanged.
+			if value || name != "disable_global_guardrails" {
+				return types.MapNull(types.StringType), errSemanticDictionaryTraversal
+			}
 		default:
 			return types.MapNull(types.StringType), errSemanticDictionaryTraversal
 		}
