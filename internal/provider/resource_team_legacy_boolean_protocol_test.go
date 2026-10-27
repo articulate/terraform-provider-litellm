@@ -12,16 +12,18 @@ import (
 	"github.com/hashicorp/terraform-plugin-go/tftypes"
 )
 
-func TestTeamReadPreservesLegacyBooleanMetadataWithSemanticOwnershipProtocol(t *testing.T) {
+func TestTeamReadAcceptsOnlyRoundTrippableLegacyBooleanMetadataProtocol(t *testing.T) {
 	for _, test := range []struct {
-		name     string
-		prior    string
-		remote   bool
-		expected string
+		name   string
+		key    string
+		prior  string
+		remote bool
+		ok     bool
 	}{
-		{"false", "false", false, "false"},
-		{"true", "true", true, "true"},
-		{"changed", "false", true, "true"},
+		{"guardrails false", "disable_global_guardrails", "false", false, true},
+		{"guardrails true", "disable_global_guardrails", "true", true, false},
+		{"guardrails changed to true", "disable_global_guardrails", "false", true, false},
+		{"other key false", "other_flag", "false", false, false},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			ctx := context.Background()
@@ -41,7 +43,7 @@ func TestTeamReadPreservesLegacyBooleanMetadataWithSemanticOwnershipProtocol(t *
 							"team_id": id, "team_alias": id,
 							"metadata": map[string]interface{}{
 								"allowed_passthrough_routes": []string{"/model-disco"},
-								"disable_global_guardrails":  test.remote,
+								test.key:                     test.remote,
 								"unowned_boolean":            true,
 							},
 						},
@@ -59,7 +61,7 @@ func TestTeamReadPreservesLegacyBooleanMetadataWithSemanticOwnershipProtocol(t *
 			state := teamSemanticProtocolValue(t, schema, map[string]interface{}{
 				"id": id, "team_id": id, "team_alias": id, "metadata_json": semantic,
 				"metadata": map[string]tftypes.Value{
-					"disable_global_guardrails": tftypes.NewValue(tftypes.String, test.prior),
+					test.key: tftypes.NewValue(tftypes.String, test.prior),
 				},
 			})
 			prepared, err := prepareTeamSemanticDictionary(ctx, types.StringValue(semantic), types.MapNull(types.StringType))
@@ -75,16 +77,25 @@ func TestTeamReadPreservesLegacyBooleanMetadataWithSemanticOwnershipProtocol(t *
 				t.Fatal(err)
 			}
 			read, err := protocolServer.ReadResource(ctx, &tfprotov6.ReadResourceRequest{TypeName: typeName, CurrentState: state, Private: private})
-			if err != nil || accessGroupProtocolDiagnosticsHaveError(read.Diagnostics) {
-				t.Fatalf("refresh: err=%v diagnostics=%s", err, agentProtocolDiagnosticsText(read.Diagnostics))
+			if err != nil {
+				t.Fatal(err)
+			}
+			if !test.ok {
+				if !accessGroupProtocolDiagnosticsHaveError(read.Diagnostics) {
+					t.Fatal("refresh accepted a boolean that a legacy write would send back as a string")
+				}
+				return
+			}
+			if accessGroupProtocolDiagnosticsHaveError(read.Diagnostics) {
+				t.Fatalf("refresh: diagnostics=%s", agentProtocolDiagnosticsText(read.Diagnostics))
 			}
 			attributes := protocolAttributeMap(t, schema, read.NewState)
 			var metadata map[string]tftypes.Value
 			if err := attributes["metadata"].As(&metadata); err != nil {
 				t.Fatal(err)
 			}
-			if len(metadata) != 1 || protocolString(t, metadata["disable_global_guardrails"]) != test.expected {
-				t.Fatalf("legacy metadata=%v, want only disable_global_guardrails=%q", metadata, test.expected)
+			if len(metadata) != 1 || protocolString(t, metadata[test.key]) != "false" {
+				t.Fatalf("legacy metadata=%v, want only %s=\"false\"", metadata, test.key)
 			}
 			if got := protocolString(t, attributes["metadata_json"]); got != semantic {
 				t.Fatalf("metadata_json=%q, want %q", got, semantic)
