@@ -591,7 +591,7 @@ func projectTeamLegacyMetadataWithSemantic(ctx context.Context, current types.Ma
 			filtered[name] = value
 		}
 		switch value.(type) {
-		case string, map[string]interface{}, []interface{}, nil:
+		case string, bool, map[string]interface{}, []interface{}, nil:
 		default:
 			return types.MapNull(types.StringType), errSemanticDictionaryTraversal
 		}
