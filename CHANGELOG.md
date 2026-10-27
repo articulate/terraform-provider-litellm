@@ -5,6 +5,24 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [3.1.1](https://github.com/articulate/terraform-provider-litellm/compare/v3.1.0...v3.1.1) (2026-10-27)
+
+### Upgrade Notes
+- No configuration or state changes. Teams whose legacy `metadata` state owns
+  `disable_global_guardrails = "false"` refresh again; v3.0.1 and v3.1.0 fail
+  them with "Team Read Failed". Other boolean values on legacy-owned keys
+  still fail the read.
+
+### Security
+- Refresh accepts only `disable_global_guardrails = false` from LiteLLM. A
+  legacy write would send a stored `true` back as the string `"true"`, which
+  LiteLLM does not treat as true, so that value stays rejected and cannot
+  silently re-enable global guardrails.
+
+### Bug Fixes
+
+* **team:** refresh teams whose legacy metadata disables global guardrails ([#11](https://github.com/articulate/terraform-provider-litellm/issues/11)) ([49ab5dd](https://github.com/articulate/terraform-provider-litellm/commit/49ab5dda91947d5bfd323dcf8712d14b5432faa1))
+
 ## [Unreleased]
 
 ## [3.1.0]
